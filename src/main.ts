@@ -5,11 +5,15 @@ import { Tracker } from "./tracking/tracker";
 import { Gestures } from "./tracking/gestures";
 import { Forest } from "./scene/forest";
 import { Sound } from "./ui/sound";
+import { createClient, leaderboardUrl } from "./leaderboard/client";
+import { newSubmissionId } from "./leaderboard/id";
+import { ResultSession, type Snapshot } from "./leaderboard/session";
+import { mountResultBoard, setupHomeLeaderboard } from "./ui/leaderboard";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<canvas id="world" aria-label="森林水果遊戲場景"></canvas>
 <div class="vignette"></div><header><a class="brand" href="#" aria-label="返回首頁"><span class="brand-icon">✳</span><span>森之刃<small>FOREST SLICE</small></span></a><div class="top-actions"><span class="edition">A LITTLE FOREST. A BIG CHALLENGE.</span><button id="sound" class="icon-button" aria-label="靜音" aria-pressed="false">♫</button><button id="quality" class="icon-button" aria-label="低畫質" aria-pressed="false">◈</button><button id="pause" class="icon-button" aria-label="暫停" hidden>Ⅱ</button></div></header>
 <div id="hud" hidden><div class="hud-score"><span>SCORE · 得分</span><strong id="score">000</strong></div><div class="timer"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26"/><circle id="timer-ring" cx="30" cy="30" r="26"/></svg><strong id="time">30</strong></div><div class="hud-combo"><span>BEST COMBO</span><strong id="combo">—</strong></div></div>
-<main id="panel"><div class="eyebrow"><i></i> THE ORCHARD IS YOURS</div><h1>揮手之間，<br>果然<span>痛快。</span></h1><p class="lead">走進森林，伸出食指。<br>用雙手刀光，切出你的 30 秒高分。</p><button id="start" class="primary">啟動攝影機 <span>↗</span></button><p class="privacy"><span>◉</span> 影像僅在你的裝置處理，不會上傳</p><div class="rule-row"><span><b>30</b> 秒挑戰</span><span><b>↗↖</b> 雙手出擊</span><span><b>✦</b> 連切加分</span></div></main>
+<main id="panel"><div class="eyebrow"><i></i> THE ORCHARD IS YOURS</div><h1>揮手之間，<br>果然<span>痛快。</span></h1><p class="lead">走進森林，伸出食指。<br>用雙手刀光，切出你的 30 秒高分。</p><button id="start" class="primary">啟動攝影機 <span>↗</span></button><button id="leaderboard-open" class="secondary" type="button">歷史排行 TOP 10</button><p class="privacy"><span>◉</span> 影像僅在你的裝置處理，不會上傳</p><div class="rule-row"><span><b>30</b> 秒挑戰</span><span><b>↗↖</b> 雙手出擊</span><span><b>✦</b> 連切加分</span></div></main>
 <section id="message" class="message" hidden aria-live="polite"><span class="eyebrow" id="message-tag">GET READY</span><h2 id="message-title"></h2><p id="message-copy"></p><div id="result-stats"></div><button id="action" class="primary" hidden></button><button id="home" class="text-button">返回森林</button></section>
 <div id="countdown" hidden></div><div id="tutorial" hidden><span class="eyebrow">FIRST SLICE</span><h2>伸出食指，劃過水果</h2><p>左右手都可以 · 收起食指即可收刀</p></div>
 <aside id="camera-card" hidden><div class="camera-frame"><video id="video" autoplay playsinline muted></video><span class="camera-guide"></span></div><div><i id="tracking-dot"></i><span id="tracking-label">把手放進畫面</span><span class="camera-local">LOCAL</span></div></aside>
@@ -40,6 +44,21 @@ let lastFrame = performance.now(),
   tutorialAt = 0;
 let injected = false;
 let fps = 0;
+// 每局一個提交識別；同一局的所有重試沿用。
+let roundId = newSubmissionId();
+let board: { session: ResultSession; dispose(): void } | null = null;
+const leaderboardClient = () => {
+  const url = leaderboardUrl();
+  return url ? createClient(url) : null;
+};
+function clearBoard() {
+  board?.dispose();
+  board = null;
+}
+function startRound(now: number) {
+  game.start(now);
+  roundId = newSubmissionId();
+}
 function show(id: string, visible: boolean) {
   el(id).hidden = !visible;
 }
@@ -63,6 +82,7 @@ function message(title: string, copy: string, action = "", tag = "GET READY") {
   el("message-tag").textContent = tag;
   el("action").textContent = action;
   show("action", !!action);
+  clearBoard();
   el("result-stats").innerHTML = "";
 }
 function resetInput() {
@@ -106,6 +126,7 @@ async function setup() {
 }
 function home() {
   cleanup();
+  clearBoard();
   game.start(performance.now());
   game.state = "idle";
   game.targets = [];
@@ -138,6 +159,27 @@ function results() {
   );
   el("result-stats").innerHTML =
     `<div class="final-score">${game.score}<small>POINTS</small></div><div class="stats"><span><b>${game.fruits}</b>切開水果</span><span><b>${game.maxCombo}</b>最高連切</span><span><b>${game.bombs}</b>碰到炸彈</span></div>`;
+  // 結算快照與遊戲物件脫鉤：之後重玩重設 game 不影響這局的提交內容。
+  const snapshot: Snapshot = Object.freeze({
+    submissionId: roundId,
+    score: game.score,
+    fruits: game.fruits,
+    bombs: game.bombs,
+    maxCombo: game.maxCombo,
+  });
+  let view: ReturnType<typeof mountResultBoard> | null = null;
+  const session = new ResultSession(snapshot, leaderboardClient(), (s) =>
+    view?.render(s),
+  );
+  view = mountResultBoard(el("result-stats"), session);
+  board = {
+    session,
+    dispose() {
+      session.dispose();
+      view?.dispose();
+    },
+  };
+  void session.load();
 }
 function accept(blades: Blade[]) {
   if (!["tutorial", "playing", "countdown"].includes(mode)) return;
@@ -166,6 +208,7 @@ camera.onInterrupted = () => {
   else if (mode === "tutorial") fail(Error("攝影機已中斷，請重試。"));
 };
 el("start").onclick = () => void setup();
+setupHomeLeaderboard(el<HTMLButtonElement>("leaderboard-open"), leaderboardClient);
 el("home").onclick = home;
 el("pause").onclick = pause;
 el("sound").onclick = () => {
@@ -279,7 +322,7 @@ function frame(now: number) {
       el("tutorial").querySelector("h2")!.textContent = "漂亮！準備開始";
     }
     if (tutorialAt && now - tutorialAt > 700) {
-      game.start(now);
+      startRound(now);
       resetInput();
       setMode("countdown");
     }
@@ -328,6 +371,12 @@ if (import.meta.env.DEV) {
     get fps() {
       return fps;
     },
+    get board() {
+      return board?.session.state ?? null;
+    },
+    get roundId() {
+      return roundId;
+    },
     tutorial() {
       injected = true;
       setMode("tutorial");
@@ -335,7 +384,7 @@ if (import.meta.env.DEV) {
     },
     start() {
       injected = true;
-      game.start(performance.now() - 3000);
+      startRound(performance.now() - 3000);
       setMode("playing");
     },
     finish() {

@@ -49,3 +49,36 @@
 ## 使用者試玩回饋
 
 使用者回報：方向直覺、收起食指會停止出刀、雙手交叉後沒有刀光跳接。此次裝置型號與瀏覽器版本未確認，先記錄操作結果，不視為完整跨裝置矩陣通過。依回饋加大指尖光點，將細線改成有光暈的寬刀光。
+
+## 歷史排行榜（add-historical-leaderboard）
+
+日期：2026-10-11。環境：macOS、arm64、Node 26、PostgreSQL 16（Homebrew 執行檔）、Google Chrome（Playwright）。
+
+### 已完成（自動化）
+
+- `pnpm check`、`pnpm build`、`openspec validate add-historical-leaderboard --strict` 通過。
+- `pnpm test`：146 項，含 Edge handler 56 項（CORS、方法、4 KiB 上限、姓名／成績邊界、錯誤映射、欄位白名單、HMAC 來源鍵）、排行 client、排名／資格／對白、單局提交狀態。
+- `pnpm test:db`：71 項，在拋棄式 PostgreSQL 16 上套用 migration，並模擬 Supabase 的 `anon`／`authenticated`／`service_role` 與預設授權。涵蓋資料表約束、排名與門檻、冪等重試（含跌出榜後）、訪客權限全拒、多連線並發（以 `pg_stat_activity` 確認後到者等待鎖）、跨 instance 與並發節流、24 小時清理，以及 handler 接真實資料庫的 HTTP 契約。移除 advisory lock 的突變測試會使 4 項並發測試全部失敗，證明測試有效。
+- 從乾淨副本以 `pnpm install --frozen-lockfile` 後執行 `pnpm test:db`，71 項通過。
+- `pnpm test:e2e`：28 項（原 8 項＋排行榜 20 項，使用模擬 API）：首頁 dialog 無攝影機請求、Escape／焦點圈限／焦點回復、設定不變；結算合資格／未達標／追平／新紀錄／略過／資格失效／超長姓名；讀取失敗、回應遺失後以原內容重試只存一筆、429、已跌出榜、未設定服務、上一局遲到回應不污染新畫面；桌面與手機橫直向長名字截圖、無水平溢出、HTML 名字不執行。
+- 截圖已檢視：`leaderboard-desktop.png`、`leaderboard-mobile-portrait.png`、`leaderboard-mobile-landscape.png`、`leaderboard-home-mobile.png`、`leaderboard-dialog-mobile.png`、`leaderboard-submitted-landscape.png`。手機截圖為桌面瀏覽器 viewport 模擬。
+- 正式建置（base `/ai_fruit_ninja/`）以 `vite preview` 檢查：無 `__test` 與端點覆寫 hook、無 page error、無 POST、模型載入到試切畫面。未設定端點時排行榜顯示「還沒開張」；設定為無法連線的端點時顯示讀取失敗。產物不含 `service_role`、JWT 或其他秘密字樣。
+
+### Supabase 測試專案串接（任務 5.3）
+
+專案 `forest-slice-test`（ref `niipbzkmeltksfgynwvn`，Northeast Asia / Tokyo，PostgreSQL 17，Supabase CLI 2.120.0）。
+
+- `supabase db push` 套用 migration。遠端查核：`anon`、`authenticated` 對兩張表與 5 個函式皆無權限，只有 `service_role` 有；兩張表 RLS 開啟；pg_cron 1.6.4 已建立 `leaderboard-purge-rate-limits` 每小時排程。
+- 秘密：`RATE_LIMIT_SECRET`（隨機產生，未顯示）、`ALLOWED_ORIGINS=https://zooroy.github.io,http://localhost:5188`、`RATE_LIMIT_IP_HEADER=cf-connecting-ip`。函式以 `--use-api` 部署，`verify_jwt = false`。
+- 匿名 HTTP 31/31 通過：OPTIONS 204、本機來源預檢、未知／缺少 Origin 403、PUT 405、GET 200 + no-store、首次 201、重試 200 同 entryId、異內容 409、同識別並發 5 次只存一筆、400（負分、非五分單位、超長名字、未知欄位、超過 4 KiB）、滿榜同分 409 且未寫入、同分依接受順序、以公開 key 直接讀改刪新增資料表與呼叫 3 個 RPC 全部 401／42501 且資料不變、超過頻率 429 + Retry-After、節流期間合法提交不寫入、GET 不受影響。
+- 可信來源：以暫時的 header 回顯函式（驗證後已刪除）確認 `cf-connecting-ip` 等於對外 IP 且客戶端無法自帶；`x-forwarded-for` 最右側是輪替的平台代理 IP，不可用。以上限 3 次實測：第 4 次 429，偽造 `X-Forwarded-For`／`True-Client-IP`／`Forwarded`／`X-Real-IP` 皆無法繞過。驗證後恢復預設每分鐘 10 次。
+- 本機開發伺服器接真實端點：首頁 dialog 讀到 10 筆 → 結算邀請「新紀錄」→ 送出 201 → 醒目顯示第 1 名；另一個獨立瀏覽器 context 讀到同一筆。無 page error。
+- 清理：刪除本次建立的 11 筆「驗證5.3-」成績（刪除前確認資料表只有這 11 筆）與 9 個節流 bucket，遠端兩表皆為 0 筆。
+
+### 尚未驗證
+
+| 項目 | 原因 |
+| --- | --- |
+| 從不同網路實際取得獨立節流額度 | 以 header 回顯確認 `cf-connecting-ip` 反映對外 IP，未另外切換網路實測 |
+| 正式專案部署、GitHub Pages 正式網址的真實 API 連線與兩個瀏覽器共享榜單（任務 6.2、6.3） | 尚未部署正式環境 |
+| 手機實機鍵盤與橫直向留名流程 | 需真人裝置測試 |

@@ -1,0 +1,9 @@
+# Supabase CLI 設定。未列出的項目使用 CLI 預設值。
+project_id = "ai_fruit_ninja"
+
+[db]
+major_version = 17
+
+[functions.leaderboard]
+# 公開免登入端點：瀏覽器不帶 Supabase JWT，函式內以伺服器憑證呼叫固定 RPC。
+verify_jwt = false

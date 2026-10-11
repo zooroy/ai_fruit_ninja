@@ -28,6 +28,9 @@ jobs:
       - run: pnpm assets
       - run: pnpm test
       - run: pnpm build
+        env:
+          # 公開排行榜端點（repository variable，非 secret）；未設定時排行榜顯示未開張。
+          VITE_LEADERBOARD_URL: ${{ vars.VITE_LEADERBOARD_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

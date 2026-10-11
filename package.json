@@ -9,7 +9,8 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "assets": "node scripts/assets.mjs && node scripts/build-worker.mjs"
+    "assets": "node scripts/assets.mjs && node scripts/build-worker.mjs",
+    "test:db": "vitest run --config vitest.db.config.ts"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
@@ -17,8 +18,10 @@
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
+    "@types/pg": "8.11.10",
     "@types/three": "0.180.0",
     "esbuild": "0.25.12",
+    "pg": "8.13.1",
     "prettier": "3.6.2",
     "typescript": "5.9.3",
     "vite": "7.1.9",

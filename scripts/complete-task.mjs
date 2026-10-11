@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-const name = "add-gesture-fruit-ninja";
+const name = process.env.CHANGE ?? "add-gesture-fruit-ninja";
 for (const id of process.argv.slice(2)) {
   const state = JSON.parse(
     execFileSync(

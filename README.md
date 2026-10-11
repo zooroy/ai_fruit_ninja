@@ -1,6 +1,6 @@
 # 森之刃 · Forest Slice
 
-以左右食指操作的 30 秒水果切割遊戲，結合 low-poly 森林場景、雙手刀光及連切加分。使用 Vite、TypeScript、Three.js 與 MediaPipe，攝影機影像只在裝置端處理，不上傳或儲存；無需後端或登入。
+以左右食指操作的 30 秒水果切割遊戲，結合 low-poly 森林場景、雙手刀光及連切加分。使用 Vite、TypeScript、Three.js 與 MediaPipe，攝影機影像只在裝置端處理，不上傳或儲存；無需登入。遊戲本身是純前端；選用的歷史排行榜使用 Supabase 保存成績，未設定時遊戲照常運作。
 
 本專案使用 **OpenSpec 規格驅動開發**：先 `propose` 定義需求、規格與設計，再 `apply` 實作與驗證，最後 `archive` 同步正式規格並保留開發紀錄。
 
@@ -26,6 +26,7 @@ pnpm dev
 | `pnpm test` | 執行 Vitest 單元測試 |
 | `pnpm build` | 重建 Worker、檢查型別並輸出 `dist/` |
 | `pnpm test:e2e` | 執行 Playwright 測試，需要本機安裝 Google Chrome |
+| `pnpm test:db` | 以拋棄式 PostgreSQL 執行排行榜資料庫與 API 整合測試，需要 PostgreSQL 16 執行檔 |
 
 修改 `src/tracking/worker.ts` 或其依賴後，開發期間可重新執行 `pnpm assets` 更新 Worker。正式建置會自動重建 Worker，但首次建置前仍需準備模型與 WASM。
 
@@ -43,6 +44,71 @@ pnpm dev
 pnpm exec vite preview --host 127.0.0.1
 # 開啟 http://127.0.0.1:4173/ai_fruit_ninja/
 ```
+
+## 歷史排行榜
+
+首頁「啟動攝影機」下方的「歷史排行 TOP 10」不需攝影機即可瀏覽；每局結算時也會顯示同一份榜單、本局預估名次或與第十名的差距。
+
+| 規則 | 說明 |
+| --- | --- |
+| 排序 | 分數高者在前；同分時較早被伺服器接受者在前，沒有並列名次 |
+| 入榜資格 | 未滿十筆時任何分數（含 0 分）都可留名；滿十筆後必須**嚴格大於**第十名 |
+| 差距 | 未達標時顯示追平所需分數，以及超越所需分數（多 5 分，即最小計分單位） |
+| 留名 | 只有合資格且主動按「送出」才會保存；名字最多 20 字，留白為「不知名的勇者」，會公開顯示 |
+| 每局獨立 | 不登入、不合併同名紀錄；同一局重試只會保存一筆 |
+| 資格確認 | 送出時伺服器以最新榜單重新判斷，留名期間被超越會顯示「又有高手刷新紀錄了」 |
+
+排行榜不是防作弊系統：伺服器只做格式、合理範圍與頻率檢查，無法證明分數來自真實遊玩。名字以純文字顯示；不當名字需由專案擁有者在 Supabase 後台刪除。
+
+### 架構
+
+```text
+GitHub Pages（靜態網站）──fetch──▶ Supabase Edge Function: leaderboard ──service_role──▶ PostgreSQL RPC
+       只知道公開網址                    CORS、驗證、節流、錯誤碼                     單一交易判斷資格並寫入
+```
+
+前端只需要公開網址 `VITE_LEADERBOARD_URL`，沒有任何金鑰。資料模型、權限、HTTP 契約、節流與函式秘密見 [supabase/README.md](supabase/README.md)。
+
+### 本機設定
+
+```sh
+cp .env.example .env.local      # 填入 VITE_LEADERBOARD_URL；留空則排行榜顯示「森林英雄榜還沒開張」
+pnpm test:db                    # 資料庫與 API 整合測試，不需要 Docker
+```
+
+`.env.local` 與 `supabase/.env*` 已被 Git 忽略。
+
+### 部署順序
+
+需要 [Supabase CLI](https://supabase.com/docs/guides/cli) 與專案擁有者權限；在本機終端機登入，不要把任何金鑰貼進文件、issue 或對話。
+
+1. 在 Supabase 建立專案並連結：`supabase login`、`supabase link --project-ref <project-ref>`。
+2. （建議）在 Dashboard 啟用 `pg_cron`，讓 migration 自動排程清除 24 小時前的節流紀錄。
+3. 套用資料庫：`supabase db push`。
+4. 設定函式秘密：
+   ```sh
+   supabase secrets set RATE_LIMIT_SECRET=$(openssl rand -hex 32)
+   supabase secrets set ALLOWED_ORIGINS=https://zooroy.github.io
+   supabase secrets set RATE_LIMIT_IP_HEADER=cf-connecting-ip
+   ```
+   `ALLOWED_ORIGINS` 只填來源（協定＋網域），不含 `/ai_fruit_ninja/` 路徑；測試專案可加上 `,http://localhost:5188` 供本機開發。`RATE_LIMIT_IP_HEADER` 的選擇依據見 [節流說明](supabase/README.md#節流)；不要改用 `x-forwarded-for`。
+5. 部署函式：`supabase functions deploy leaderboard --use-api`（`supabase/config.toml` 已設定 `verify_jwt = false`；`--use-api` 由 Supabase 雲端打包，本機不需要 Docker）。
+6. 以匿名 HTTP 驗證（應回 `200` 與 `{"entries":[...]}`）：
+   ```sh
+   curl -i -H 'Origin: https://zooroy.github.io' https://<project-ref>.supabase.co/functions/v1/leaderboard
+   ```
+7. 在 GitHub **Settings → Secrets and variables → Actions → Variables** 新增 repository variable `VITE_LEADERBOARD_URL` = `https://<project-ref>.supabase.co/functions/v1/leaderboard`。這是公開網址，放 Variables 而不是 Secrets；服務金鑰永遠不進 GitHub。
+8. 推送到 `main` 或手動執行部署工作流程，建置時會注入上述網址。
+
+### 免費方案暫停與恢復
+
+Supabase 免費專案閒置一段時間會被暫停。暫停期間排行榜顯示「森林信使暫時迷路了」，遊戲、重玩與回首頁不受影響。到 Supabase Dashboard 選擇 **Restore project** 即可恢復，資料會保留；也請定期在 **Usage** 頁確認資料庫容量與函式呼叫量。
+
+### 停用與回退
+
+- 暫時停用：刪除 GitHub variable `VITE_LEADERBOARD_URL` 後重新部署，排行榜顯示「森林英雄榜還沒開張」；或回退到先前的前端版本。
+- 停止 API：`supabase functions delete leaderboard`，前端會顯示讀取失敗而不影響遊戲。
+- 資料表與既有成績保留，不提供破壞性 down migration；正式資料不可用 `supabase db reset` 清除。
 
 ## 遊玩方式
 
@@ -159,6 +225,9 @@ flowchart TD
 | `src/game/engine.ts` | 獨立於攝影機與 WebGL 的時間、生成、碰撞、計分及連切規則 |
 | `src/scene/forest.ts` | 森林背景、水果、炸彈、雙刀光、切半與粒子效果 |
 | `src/ui/sound.ts` | 合成音效與靜音控制 |
+| `src/leaderboard/` | 排行榜 API client、排名／資格／對白純函式、單局提交狀態與每局識別 |
+| `src/ui/leaderboard.ts` | 首頁排行 dialog 與結算區內嵌榜單、留名表單 |
+| `supabase/` | 排行榜 migration、Edge Function 與共用驗證規則，見 [supabase/README.md](supabase/README.md) |
 | `src/style.css` | 桌面及手機橫直向版面 |
 
 推論與渲染分開排程，同一時間最多一個推論在途；Worker 路徑限制最短間隔 40 ms，主執行緒回退為 80 ms，實際頻率仍取決於裝置效能。畫面以 3D 呈現，命中則使用共同的 2D 遊戲平面，以相鄰有效刀光點的線段判斷碰撞，避免快速揮動漏判。
@@ -215,11 +284,15 @@ src/
 ├── tracking/               # 模型、Worker 與手勢輸入
 ├── game/                   # 純遊戲規則
 ├── scene/                  # Three.js 場景
-├── ui/                     # 音效
+├── leaderboard/            # 排行榜資料、規則與提交狀態
+├── ui/                     # 音效與排行榜介面
 └── style.css               # 響應式樣式
+supabase/
+├── migrations/             # 排行榜資料表、RPC 與權限
+└── functions/              # leaderboard Edge Function 與共用規則
 public/                     # 同源模型、WASM 與產生的 Worker
 scripts/                    # 資源準備、Worker 建置等工具
-tests/                     # Vitest 單元測試與 e2e/ 瀏覽器測試
+tests/                      # Vitest 單元測試、e2e/ 瀏覽器測試與 db/ 資料庫測試
 openspec/
 ├── config.yaml             # spec-driven 設定
 ├── specs/                  # 正式功能規格
@@ -230,7 +303,7 @@ docs/                       # 驗收紀錄與介面截圖
 
 ## 驗證狀態
 
-測試涵蓋遊戲規則、手勢合成輸入、攝影機生命週期、音效及瀏覽器流程。E2E 使用假攝影機與開發限定測試注入，正式建置不暴露測試 hooks。
+測試涵蓋遊戲規則、手勢合成輸入、攝影機生命週期、音效及瀏覽器流程。E2E 使用假攝影機與開發限定測試注入，正式建置不暴露測試 hooks。排行榜的瀏覽器測試使用模擬 API；資料庫交易、權限、並發與節流以 `pnpm test:db` 在真實 PostgreSQL 上驗證，但不能代替部署到 Supabase 後的實際串接驗證。
 
 歷史測試結果、使用者試玩回饋與尚待真人驗證的項目見 [docs/verification.md](docs/verification.md)。手機跨裝置矩陣、連續三局效能與端到端延遲尚未有完整量測，不將瀏覽器模擬或任務勾選視為實機全部通過。
 

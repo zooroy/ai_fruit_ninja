@@ -4,3 +4,10 @@ dist/
 test-results/
 playwright-report/
 .DS_Store
+.env
+.env.local
+.env.*.local
+supabase/.env
+supabase/.env.*
+supabase/.temp/
+supabase/.branches/
