@@ -23,7 +23,7 @@
 
 - [x] 5.1 執行 `pnpm check`、`pnpm test`、`pnpm build`、`pnpm test:e2e` 與 `openspec validate drop-mobile-support --strict`，全部通過。
 - [x] 5.2 正式建置以 `vite preview` 在 `/ai_fruit_ninja/` 檢查：桌面 Chrome 可載入模型到試切，觸控模擬顯示說明卡且沒有攝影機或模型請求，排行榜可讀取，無 page error。
-- [ ] 5.3 推送至 `main` 並確認 GitHub Pages 部署成功；以正式網址重做 5.2 的桌面與觸控模擬檢查，請使用者以手機確認看到說明卡並可瀏覽排行榜，結果記錄於 `docs/verification.md`。
+- [x] 5.3 推送至 `main` 並確認 GitHub Pages 部署成功；以正式網址重做 5.2 的桌面與觸控模擬檢查，請使用者以手機確認看到說明卡並可瀏覽排行榜，結果記錄於 `docs/verification.md`。
 
 ## Workflow follow-up
 

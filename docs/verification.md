@@ -106,9 +106,15 @@
 - 原「手機」截圖改為桌面窄／矮視窗：`narrow-window.png`、`short-window.png`、`narrow-window-leaderboard.png`、`short-window-leaderboard.png`、`narrow-window-home.png`、`narrow-window-dialog.png`、`short-window-submitted.png`；舊的 `mobile.png`、`mobile-landscape.png`、`leaderboard-mobile-*.png`、`leaderboard-home-mobile.png`、`leaderboard-dialog-mobile.png`、`leaderboard-submitted-landscape.png` 已刪除，上方歷史段落提及的舊檔名以此為準。窄視窗另驗證可直接點啟動攝影機進入試切。
 - 新截圖 `unsupported-phone.png`、`unsupported-tablet.png` 已檢視：說明卡依句子分行，排行入口位於說明卡下方。
 
+### 發布
+
+- 正式建置以 `vite preview`（`http://localhost:5188/ai_fruit_ninja/`，排行端點指向測試專案）檢查：桌面 Chrome 進入試切，攝影機 1 次、模型 1 次；手機與平板觸控模擬顯示說明卡、無啟動按鈕，攝影機與模型請求皆為 0，首頁排行 GET 200；無測試 hooks、無 page error。
+- commit `1b65657` 推送至 `main`，Deploy to GitHub Pages（run 38148749625）成功。正式網址重做相同檢查，結果一致；首頁排行讀取正式專案（GET 200），只讀取不寫入。
+- 2026-10-11：使用者以手機開啟正式網址實測，回報沒有問題（看到說明卡並可瀏覽排行）。裝置型號與瀏覽器未提供；平板未實機測試。
+
 ### 尚未驗證
 
 | 項目 | 原因 |
 | --- | --- |
-| 實體手機與平板看到說明卡並可瀏覽排行 | 需使用者以實機確認（任務 5.3） |
+| 平板實機 | 未實機測試，僅觸控模擬 |
 | 接上觸控板的 iPad、平板模式 Chromebook 的實際判定 | 無實機；依設計，回報 `pointer: fine` 者視為可遊玩 |
