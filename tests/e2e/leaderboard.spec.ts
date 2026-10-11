@@ -412,10 +412,11 @@ test.describe("leaderboard presentation", () => {
   const longNames = (i: number) =>
     i === 0 ? "<img src=x onerror=window.__xss=1>" : i % 2 ? "ＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷＷ" : "🍉🍉森林裡最快最快最快的刀客🍉🍉";
 
-  for (const [label, size] of [
-    ["desktop", { width: 1280, height: 800 }],
-    ["mobile-portrait", { width: 390, height: 844 }],
-    ["mobile-landscape", { width: 844, height: 390 }],
+  // 桌面視窗尺寸；手機與平板已不支援遊玩，見 device.spec.ts。
+  for (const [label, size, shot] of [
+    ["desktop", { width: 1280, height: 800 }, "docs/leaderboard-desktop.png"],
+    ["narrow-window", { width: 390, height: 844 }, "docs/narrow-window-leaderboard.png"],
+    ["short-window", { width: 844, height: 390 }, "docs/short-window-leaderboard.png"],
   ] as const) {
     test(`results board is readable on ${label}`, async ({ page }) => {
       const api = new MockApi();
@@ -442,7 +443,7 @@ test.describe("leaderboard presentation", () => {
           return m.top >= 0 && m.bottom <= innerHeight;
         }),
       ).toBe(true);
-      await page.screenshot({ path: `docs/leaderboard-${label}.png` });
+      await page.screenshot({ path: shot });
       const replay = page.getByRole("button", { name: "再挑戰一次" });
       await replay.scrollIntoViewIfNeeded();
       await expect(replay).toBeInViewport();
@@ -451,21 +452,21 @@ test.describe("leaderboard presentation", () => {
     });
   }
 
-  test("home dialog with long names on a narrow screen", async ({ page }) => {
+  test("home dialog with long names in a narrow window", async ({ page }) => {
     const api = new MockApi();
     api.seed([900, 800, 700, 600, 500, 400, 300, 200, 150, 100], longNames);
     await api.install(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    await page.screenshot({ path: "docs/leaderboard-home-mobile.png" });
+    await page.screenshot({ path: "docs/narrow-window-home.png" });
     await page.getByRole("button", { name: "歷史排行 TOP 10" }).click();
     await expect(page.getByRole("dialog").locator(".board-row")).toHaveCount(10);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.evaluate(() => (window as any).__xss)).toBeUndefined();
-    await page.screenshot({ path: "docs/leaderboard-dialog-mobile.png" });
+    await page.screenshot({ path: "docs/narrow-window-dialog.png" });
   });
 
-  test("submitting with the keyboard in landscape", async ({ page }) => {
+  test("submitting with the keyboard in a short window", async ({ page }) => {
     const api = new MockApi();
     api.seed([300, 200]);
     await api.install(page);
@@ -478,6 +479,6 @@ test.describe("leaderboard presentation", () => {
     await page.keyboard.press("Enter");
     await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
     await expect(board(page).locator(".board-row.mine")).toBeInViewport();
-    await page.screenshot({ path: "docs/leaderboard-submitted-landscape.png" });
+    await page.screenshot({ path: "docs/short-window-submitted.png" });
   });
 });

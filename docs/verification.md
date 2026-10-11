@@ -31,16 +31,15 @@
 
 ## 真人實機矩陣（未提供的細項紀錄）
 
-| 裝置 | 瀏覽器／版本 | 單手及雙手 | 交叉及重入 | 旋轉／背景恢復 | 連續三局 |
+| 裝置 | 瀏覽器／版本 | 單手及雙手 | 交叉及重入 | 背景恢復 | 連續三局 |
 |---|---|---|---|---|---|
 | 筆電攝影機 | 待使用者試玩紀錄 | 未提供結果 | 未提供結果 | 未提供結果 | 未提供結果 |
-| iPhone | Safari，版本待填 | 未提供結果 | 未提供結果 | 未提供結果 | 未提供結果 |
+
+手機與平板自 `drop-mobile-support`（2026-10-11）起不支援遊玩，已自矩陣移除，見文末該變更的紀錄。
 
 筆電：開啟 http://localhost:5188 ，授權，伸食指試切；接著測單手、左右雙手、收刀、快速橫掃、交叉遮擋、離開再進入畫面。驗證未見跳接刀光、左右方向一致、炸彈不結束遊戲。切換分頁後返回，應由「繼續挑戰」恢復。
 
-手機：固定擺放，透過可信 HTTPS 開啟，分別測橫直向及前鏡頭。不能用區網 HTTP 的攝影機失敗當成裝置不支援。
-
-效能：每台連續完成三局，記錄機型、瀏覽器、畫質、各局平均／最低 FPS、推論間隔。以外部高幀率錄影對照指尖實際位移與刀光首次位移，計算端到端延遲；目標約 30 FPS 以上、150 ms 以下，不能用模型單次時間代替此延遲。
+效能：每台桌機或筆電連續完成三局，記錄機型、瀏覽器、畫質、各局平均／最低 FPS、推論間隔。以外部高幀率錄影對照指尖實際位移與刀光首次位移，計算端到端延遲；目標約 30 FPS 以上、150 ms 以下，不能用模型單次時間代替此延遲。
 
 ## 使用者驗收結案
 
@@ -94,3 +93,22 @@
 | 正式網址上真人遊玩後的結算留名 | 正式建置無測試注入，需真人遊玩 |
 | 手機鍵盤與橫直向留名流程 | 實測未通過，手機支援將由後續變更移除 |
 | 從不同網路實際取得獨立節流額度 | 以 header 回顯確認 `cf-connecting-ip` 反映對外 IP，未另外切換網路實測 |
+
+## 停止支援手機與平板（drop-mobile-support）
+
+日期：2026-10-11。依手機實測回饋（見上方「手機實機（任務 6.2）」），手機與平板改為不支援遊玩。
+
+### 已完成（自動化）
+
+- 判斷條件：主要輸入為 `(pointer: coarse) and (hover: none)` 的裝置不支援。`tests/device.test.ts` 以假 `matchMedia` 驗證手機／平板不支援，觸控筆電（主要指標 fine、`any-pointer: coarse`）、一般桌面與可懸停的 coarse 指標支援，以及主要輸入改變時回報新結果。
+- `tests/e2e/device.spec.ts`：以 Playwright `hasTouch` + `isMobile` 模擬手機直向（390×844）、手機橫向（844×390）與平板（820×1180），先確認 Chromium 在此模式下實際回報 `pointer: coarse`、`hover: none`；顯示說明卡、無啟動攝影機按鈕與隱私提示、無水平溢出；首頁排行可開啟、無留名欄、Escape 關閉後焦點回到入口；開發 `__test.setup()` 與結算「再挑戰一次」都回到首頁；全程沒有 `getUserMedia` 呼叫、沒有下載 `hand_landmarker.task`、沒有 POST。
+- 觸控筆電：Chromium 只要開啟 `hasTouch` 就會把主要指標改為 coarse，CDP `Emulation.setEmulatedMedia` 也無法覆寫 `pointer`／`hover`（實測無效），因此改在桌面 context 注入假 `matchMedia`（`any-pointer: coarse` 成立）與 `maxTouchPoints = 10`，主要指標維持 fine；確認不顯示說明卡並可進入試切。
+- 原「手機」截圖改為桌面窄／矮視窗：`narrow-window.png`、`short-window.png`、`narrow-window-leaderboard.png`、`short-window-leaderboard.png`、`narrow-window-home.png`、`narrow-window-dialog.png`、`short-window-submitted.png`；舊的 `mobile.png`、`mobile-landscape.png`、`leaderboard-mobile-*.png`、`leaderboard-home-mobile.png`、`leaderboard-dialog-mobile.png`、`leaderboard-submitted-landscape.png` 已刪除，上方歷史段落提及的舊檔名以此為準。窄視窗另驗證可直接點啟動攝影機進入試切。
+- 新截圖 `unsupported-phone.png`、`unsupported-tablet.png` 已檢視：說明卡依句子分行，排行入口位於說明卡下方。
+
+### 尚未驗證
+
+| 項目 | 原因 |
+| --- | --- |
+| 實體手機與平板看到說明卡並可瀏覽排行 | 需使用者以實機確認（任務 5.3） |
+| 接上觸控板的 iPad、平板模式 Chromebook 的實際判定 | 無實機；依設計，回報 `pointer: fine` 者視為可遊玩 |

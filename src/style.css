@@ -426,6 +426,42 @@ h2 {
 body[data-mode="playing"] .vignette {
   background: linear-gradient(0deg, #28483325, transparent 25%);
 }
+/* 不支援遊玩的裝置（手機、平板）首頁說明 ------------------------------ */
+.device-note {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  border: 1px solid #c6b48f;
+  border-radius: 12px;
+  background: #fff8e9e6;
+  box-shadow: 0 10px 25px #25442d1c;
+  backdrop-filter: blur(8px);
+  text-align: center;
+}
+.device-note strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2d513d;
+}
+.device-note strong::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 0 100% 0 100%;
+  background: #7fbf6a;
+  vertical-align: 1px;
+}
+.device-note span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #68745e;
+  text-wrap: balance;
+}
 /* 排行榜：首頁入口、木牌榜單、結算留名 ------------------------------- */
 .secondary {
   display: block;

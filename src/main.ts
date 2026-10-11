@@ -9,11 +9,12 @@ import { createClient, leaderboardUrl } from "./leaderboard/client";
 import { newSubmissionId } from "./leaderboard/id";
 import { ResultSession, type Snapshot } from "./leaderboard/session";
 import { mountResultBoard, setupHomeLeaderboard } from "./ui/leaderboard";
+import { deviceSupport } from "./device";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `<canvas id="world" aria-label="森林水果遊戲場景"></canvas>
 <div class="vignette"></div><header><a class="brand" href="#" aria-label="返回首頁"><span class="brand-icon">✳</span><span>森之刃<small>FOREST SLICE</small></span></a><div class="top-actions"><span class="edition">A LITTLE FOREST. A BIG CHALLENGE.</span><button id="sound" class="icon-button" aria-label="靜音" aria-pressed="false">♫</button><button id="quality" class="icon-button" aria-label="低畫質" aria-pressed="false">◈</button><button id="pause" class="icon-button" aria-label="暫停" hidden>Ⅱ</button></div></header>
 <div id="hud" hidden><div class="hud-score"><span>SCORE · 得分</span><strong id="score">000</strong></div><div class="timer"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26"/><circle id="timer-ring" cx="30" cy="30" r="26"/></svg><strong id="time">30</strong></div><div class="hud-combo"><span>BEST COMBO</span><strong id="combo">—</strong></div></div>
-<main id="panel"><div class="eyebrow"><i></i> THE ORCHARD IS YOURS</div><h1>揮手之間，<br>果然<span>痛快。</span></h1><p class="lead">走進森林，伸出食指。<br>用雙手刀光，切出你的 30 秒高分。</p><button id="start" class="primary">啟動攝影機 <span>↗</span></button><button id="leaderboard-open" class="secondary" type="button">歷史排行 TOP 10</button><p class="privacy"><span>◉</span> 影像僅在你的裝置處理，不會上傳</p><div class="rule-row"><span><b>30</b> 秒挑戰</span><span><b>↗↖</b> 雙手出擊</span><span><b>✦</b> 連切加分</span></div></main>
+<main id="panel"><div class="eyebrow"><i></i> THE ORCHARD IS YOURS</div><h1>揮手之間，<br>果然<span>痛快。</span></h1><p class="lead">走進森林，伸出食指。<br>用雙手刀光，切出你的 30 秒高分。</p><div id="unsupported" class="device-note" role="note" hidden><strong>森林需要更大的舞台</strong><span>這款遊戲需要筆電或桌機的攝影機與較大畫面。<br>請改用電腦開啟，手機與平板仍可瀏覽歷史排行。</span></div><button id="start" class="primary">啟動攝影機 <span>↗</span></button><button id="leaderboard-open" class="secondary" type="button">歷史排行 TOP 10</button><p id="privacy" class="privacy"><span>◉</span> 影像僅在你的裝置處理，不會上傳</p><div class="rule-row"><span><b>30</b> 秒挑戰</span><span><b>↗↖</b> 雙手出擊</span><span><b>✦</b> 連切加分</span></div></main>
 <section id="message" class="message" hidden aria-live="polite"><span class="eyebrow" id="message-tag">GET READY</span><h2 id="message-title"></h2><p id="message-copy"></p><div id="result-stats"></div><button id="action" class="primary" hidden></button><button id="home" class="text-button">返回森林</button></section>
 <div id="countdown" hidden></div><div id="tutorial" hidden><span class="eyebrow">FIRST SLICE</span><h2>伸出食指，劃過水果</h2><p>左右手都可以 · 收起食指即可收刀</p></div>
 <aside id="camera-card" hidden><div class="camera-frame"><video id="video" autoplay playsinline muted></video><span class="camera-guide"></span></div><div><i id="tracking-dot"></i><span id="tracking-label">把手放進畫面</span><span class="camera-local">LOCAL</span></div></aside>
@@ -21,6 +22,8 @@ app.innerHTML = `<canvas id="world" aria-label="森林水果遊戲場景"></canv
 const el = <T extends HTMLElement = HTMLElement>(id: string) =>
   document.getElementById(id) as T;
 let forest: Forest;
+// 手機與平板不支援遊玩；判斷結果只在首頁套用，不中斷進行中的遊戲。
+const device = deviceSupport();
 const game = new Game(),
   sound = new Sound(),
   camera = new Camera(el<HTMLVideoElement>("video")),
@@ -102,7 +105,18 @@ function fail(error: unknown) {
   setMode("error");
   message("還差一小步", cameraError(error), "重新啟動", "CAMERA SETUP");
 }
+function applyDevice() {
+  const supported = device.supported;
+  show("start", supported);
+  show("privacy", supported);
+  show("unsupported", !supported);
+}
 async function setup() {
+  // 所有開始入口（首頁、結算重玩、開發 hooks）都在此擋下，不要求攝影機也不載入模型。
+  if (!device.supported) {
+    home();
+    return;
+  }
   cleanup();
   game.start(performance.now());
   game.state = "idle";
@@ -127,6 +141,7 @@ async function setup() {
 function home() {
   cleanup();
   clearBoard();
+  applyDevice();
   game.start(performance.now());
   game.state = "idle";
   game.targets = [];
@@ -209,6 +224,10 @@ camera.onInterrupted = () => {
 };
 el("start").onclick = () => void setup();
 setupHomeLeaderboard(el<HTMLButtonElement>("leaderboard-open"), leaderboardClient);
+applyDevice();
+device.onChange(() => {
+  if (mode === "welcome") applyDevice();
+});
 el("home").onclick = home;
 el("pause").onclick = pause;
 el("sound").onclick = () => {

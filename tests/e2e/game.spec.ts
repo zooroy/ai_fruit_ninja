@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-test("camera and background keep their proportions across viewport sizes", async ({
+test("camera and background keep their proportions across window sizes", async ({
   page,
 }) => {
   await page.goto("/");
@@ -29,19 +29,23 @@ test("camera and background keep their proportions across viewport sizes", async
     expect(scale).toEqual({ x: 1, y: 1, z: 1 });
   }
 });
-test("landing, desktop and portrait layouts", async ({ page }) => {
+test("landing, desktop and narrow window layouts", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("button", { name: "啟動攝影機" })).toBeVisible();
   await page.screenshot({ path: "docs/desktop.png" });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: "docs/mobile.png" });
+  await page.screenshot({ path: "docs/narrow-window.png" });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+  // 窄桌面視窗不是手機：仍顯示開始入口並可進入試切。
+  await expect(page.getByRole("note")).toBeHidden();
+  await page.getByRole("button", { name: "啟動攝影機" }).click();
+  await expect(page.locator("#tutorial")).toBeVisible({ timeout: 30000 });
   expect(errors).toEqual([]);
 });
 test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
@@ -154,7 +158,7 @@ test("muting and lower quality are independent of gameplay", async ({
     true,
   );
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.screenshot({ path: "docs/mobile-landscape.png" });
+  await page.screenshot({ path: "docs/short-window.png" });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
