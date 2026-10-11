@@ -1,4 +1,34 @@
 import { test, expect } from "@playwright/test";
+test("camera and background keep their proportions across viewport sizes", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "啟動攝影機" }).click();
+  await expect(page.locator("#tutorial")).toBeVisible({ timeout: 30000 });
+  for (const size of [
+    { width: 1280, height: 800 },
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    await page.setViewportSize(size);
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const video = document.querySelector("video")!;
+          const rect = video.getBoundingClientRect();
+          return Math.abs(
+            rect.width / rect.height - video.videoWidth / video.videoHeight,
+          );
+        }),
+      )
+      .toBeLessThan(0.01);
+    const scale = await page.evaluate(() => {
+      const s = (window as any).__test.forest.background.scale;
+      return { x: s.x, y: s.y, z: s.z };
+    });
+    expect(scale).toEqual({ x: 1, y: 1, z: 1 });
+  }
+});
 test("landing, desktop and portrait layouts", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));

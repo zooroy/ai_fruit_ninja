@@ -2,6 +2,7 @@ import type { Blade, Point } from "../game/engine";
 export type Landmark = { x: number; y: number; z?: number };
 export type Detection = {
   landmarks: Landmark[][];
+  worldLandmarks?: Landmark[][];
   handedness: { categoryName: string; score: number }[][];
 };
 export function mapPoint(p: Point, width: number, height: number): Point {
@@ -26,11 +27,21 @@ function angle(a: Landmark, b: Landmark, c: Landmark) {
   );
 }
 export function extended(l: Landmark[], was: boolean) {
-  return (
-    l.length >= 21 &&
-    angle(l[5], l[6], l[7]) > (was ? 140 : 155) &&
-    angle(l[6], l[7], l[8]) > (was ? 140 : 155)
-  );
+  if (l.length < 21) return false;
+  const finger = l.slice(5, 9);
+  if (finger.some((p) => ![p.x, p.y, p.z ?? 0].every(Number.isFinite)))
+    return false;
+  const distance = (a: Landmark, b: Landmark) =>
+    Math.hypot(a.x - b.x, a.y - b.y, (a.z ?? 0) - (b.z ?? 0));
+  const length =
+    distance(l[5], l[6]) + distance(l[6], l[7]) + distance(l[7], l[8]);
+  if (length < 1e-6) return false;
+  // A shortened projection is not a folded finger. Measure in 3D and
+  // require both a compact finger and a bent joint before retracting.
+  const reach = distance(l[5], l[8]) / length;
+  const bent = Math.min(angle(l[5], l[6], l[7]), angle(l[6], l[7], l[8]));
+  const folded = reach < (was ? 0.5 : 0.6) && bent < (was ? 110 : 120);
+  return !folded;
 }
 export class Gestures {
   private previous = new Map<
@@ -60,7 +71,12 @@ export class Gestures {
         ? Math.hypot(raw.x - prev.raw.x, raw.y - prev.raw.y)
         : Infinity;
       const continuous = !!prev && time - prev.time < 160 && distance < 0.3;
-      const active = extended(l, continuous && prev.active);
+      // World coordinates use the same scale on all axes, including depth.
+      const pose = d.worldLandmarks?.[i];
+      const active = extended(
+        pose?.length === 21 ? pose : l,
+        continuous && prev.active,
+      );
       const mapped = mapPoint(raw, width, height);
       const p = continuous
         ? {

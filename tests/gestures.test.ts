@@ -19,6 +19,49 @@ it("detects index without requiring other fingers", () => {
   expect(extended(hand(), false)).toBe(true);
   expect(extended(hand(0.3, false), true)).toBe(false);
 });
+it("keeps a partly bent index active, including when starting a blade", () => {
+  const l = hand();
+  l[7] = { x: 0.35, y: 0.49, z: 0 };
+  l[8] = { x: 0.4, y: 0.44, z: 0 };
+  expect(extended(l, false)).toBe(true);
+  expect(extended(l, true)).toBe(true);
+});
+it.each([0, Math.PI / 4, Math.PI / 2, Math.PI])(
+  "distinguishes pointing and fully folded fingers at rotation %s",
+  (rotation) => {
+    const rotate = (l: Landmark[]) =>
+      l.map((p) => ({
+        x: p.x,
+        y: 0.65 + (p.y - 0.65) * Math.cos(rotation),
+        z: (p.y - 0.65) * Math.sin(rotation),
+      }));
+    for (const was of [false, true]) {
+      expect(extended(rotate(hand()), was)).toBe(true);
+      expect(extended(rotate(hand(0.3, false)), was)).toBe(false);
+    }
+  },
+);
+it("uses world pose to recognize pointing even with overlapping image landmarks", () => {
+  const g = new Gestures();
+  const projected = hand().map((p) => ({ ...p, y: 0.65, z: 0 }));
+  const world = hand().map((p) => ({ x: p.x, y: 0.65, z: p.y - 0.65 }));
+  const detection = { ...result([projected]), worldLandmarks: [world] };
+  expect(g.update(detection, 0, 12, 8)[0].active).toBe(true);
+  expect(g.update(detection, 40, 12, 8)[0].from).toBeDefined();
+  detection.worldLandmarks = [hand(0.3, false)];
+  expect(g.update(detection, 80, 12, 8)[0].active).toBe(false);
+});
+it("does not activate invalid or collapsed finger landmarks", () => {
+  const l = hand();
+  l[8].x = NaN;
+  expect(extended(l, true)).toBe(false);
+  expect(
+    extended(
+      Array.from({ length: 21 }, () => ({ x: 0, y: 0, z: 0 })),
+      true,
+    ),
+  ).toBe(false);
+});
 it.each([
   [12, 8],
   [4, 8],

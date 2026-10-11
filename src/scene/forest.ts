@@ -236,7 +236,6 @@ export class Forest {
     this.camera.updateProjectionMatrix();
     this.renderer.setPixelRatio(this.low ? 1 : Math.min(devicePixelRatio, 1.7));
     this.renderer.setSize(rect.width, rect.height, false);
-    this.background.scale.x = Math.max(0.5, this.width / 14);
     this.clearTrails();
   }
   quality(low: boolean) {

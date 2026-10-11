@@ -204,10 +204,6 @@ function resize() {
     game.width = forest.width;
     game.height = forest.height;
     resetInput();
-    el("camera-card").style.setProperty(
-      "--preview-ratio",
-      String(forest.width / forest.height),
-    );
   }
 }
 try {
