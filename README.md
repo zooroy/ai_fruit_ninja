@@ -29,6 +29,21 @@ pnpm dev
 
 修改 `src/tracking/worker.ts` 或其依賴後，開發期間可重新執行 `pnpm assets` 更新 Worker。正式建置會自動重建 Worker，但首次建置前仍需準備模型與 WASM。
 
+## GitHub Pages 發布
+
+部署成功後，公開遊戲網址為 <https://zooroy.github.io/ai_fruit_ninja/>，玩家不需登入 GitHub，允許攝影機權限即可遊玩。
+
+首次發布需在儲存庫 **Settings → Pages → Build and deployment → Source** 選擇 **GitHub Actions**。GitHub Free 帳號需使用公開儲存庫。
+
+[部署工作流程](.github/workflows/deploy.yml) 在推送至 `main` 時自動安裝鎖定依賴、準備模型與 WASM、執行單元測試、建置，再發布 `dist/`。也可以在 Actions 頁面選擇 **Deploy to GitHub Pages → Run workflow** 手動發布；建置或測試失敗不會部署新版本。
+
+`vite.config.ts` 將正式建置的資源路徑設為 `/ai_fruit_ninja/`，本機開發仍使用 `/`。若更改儲存庫名稱或改用自訂網域，需同步調整 `base`。可在建置後預覽正式路徑：
+
+```sh
+pnpm exec vite preview --host 127.0.0.1
+# 開啟 http://127.0.0.1:4173/ai_fruit_ninja/
+```
+
 ## 遊玩方式
 
 1. 固定擺放手機或筆電，保持手與臉前方有光。手機建議橫放，直向也能遊玩。
