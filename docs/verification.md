@@ -75,10 +75,18 @@
 - 本機開發伺服器接真實端點：首頁 dialog 讀到 10 筆 → 結算邀請「新紀錄」→ 送出 201 → 醒目顯示第 1 名；另一個獨立瀏覽器 context 讀到同一筆。無 page error。
 - 清理：刪除本次建立的 11 筆「驗證5.3-」成績（刪除前確認資料表只有這 11 筆）與 9 個節流 bucket，遠端兩表皆為 0 筆。
 
+### 正式發布（任務 6.3）
+
+- Supabase 正式專案 `forest-slice`（ref `clpwpnaaiqlbvbnuozsk`，Tokyo，PostgreSQL 17）：migration 套用，遠端查核權限、RLS 與 pg_cron 排程同測試專案。秘密另行產生，`ALLOWED_ORIGINS=https://zooroy.github.io`，`RATE_LIMIT_IP_HEADER=cf-connecting-ip`，每來源每分鐘 10 次。
+- 匿名 HTTP 31/31 通過（同 5.3 檢查，另確認正式環境拒絕 `http://localhost:5188` 來源）。測試資料以「驗證6.3-」命名，刪除前確認資料表只有這些紀錄，驗證後清除。
+- GitHub repository variable `VITE_LEADERBOARD_URL` 於 10:54:59Z 設定；commit `cdf5974` 的 Deploy to GitHub Pages（run 38133761026）於 10:56:38Z 成功。
+- 正式網址 <https://zooroy.github.io/ai_fruit_ninja/>：產物 `index-BUz3K5PK.js` 含正式端點，不含測試 hooks 或秘密字樣；以遊戲相同請求寫入一筆後，兩個獨立瀏覽器 context 的首頁排行皆讀到該筆（GET 200），無 page error；假攝影機下模型載入至試切畫面。驗證紀錄已刪除，正式榜單為空。
+- 正式建置沒有測試注入，結算畫面留名介面無法自動化遊玩；此流程由 E2E（模擬 API）與 5.3 本機開發伺服器接真實 API 驗證，正式網址上需真人遊玩確認。
+
 ### 尚未驗證
 
 | 項目 | 原因 |
 | --- | --- |
+| 正式網址上真人遊玩後的結算留名 | 正式建置無測試注入，需真人遊玩 |
+| 手機實機鍵盤與橫直向留名流程（任務 6.2） | 需真人裝置測試 |
 | 從不同網路實際取得獨立節流額度 | 以 header 回顯確認 `cf-connecting-ip` 反映對外 IP，未另外切換網路實測 |
-| 正式專案部署、GitHub Pages 正式網址的真實 API 連線與兩個瀏覽器共享榜單（任務 6.2、6.3） | 尚未部署正式環境 |
-| 手機實機鍵盤與橫直向留名流程 | 需真人裝置測試 |
