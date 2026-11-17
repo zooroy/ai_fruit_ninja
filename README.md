@@ -42,7 +42,7 @@ flowchart LR
 | 瀏覽器 E2E | `pnpm test:e2e` | Playwright + 假攝影機跑完整流程；測試 hooks 不進正式建置 |
 | 資料庫整合 | `pnpm test:db` | 拋棄式 PostgreSQL 16 驗證權限、並發搶鎖、冪等與節流 |
 
-推送至 `main` 時，GitHub Actions 會先跑測試再建置、部署。真人實機驗證結果與尚未量測的項目（跨裝置矩陣、端到端延遲等）如實記錄在 [docs/verification.md](docs/verification.md)。
+推送至 `main` 時，GitHub Actions 會先跑測試再建置、部署。
 
 ## 本機啟動
 

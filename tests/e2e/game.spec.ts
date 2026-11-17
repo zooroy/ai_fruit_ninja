@@ -34,9 +34,9 @@ test("landing, desktop and narrow window layouts", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("button", { name: "啟動攝影機" })).toBeVisible();
-  await page.screenshot({ path: "docs/desktop.png" });
+  await page.screenshot({ path: "test-results/screenshots/desktop.png" });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: "docs/narrow-window.png" });
+  await page.screenshot({ path: "test-results/screenshots/narrow-window.png" });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -116,7 +116,7 @@ test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
   expect(
     await page.evaluate(() => (window as any).__test.camera.stream),
   ).toBeNull();
-  await page.screenshot({ path: "docs/results.png" });
+  await page.screenshot({ path: "test-results/screenshots/results.png" });
   await page.getByRole("button", { name: "再玩一次" }).click();
   await expect(page.getByText("正在啟動攝影機…")).toBeVisible();
 });
@@ -159,7 +159,7 @@ test("muting is independent of gameplay", async ({
     page.getByRole("button", { name: "靜音", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.screenshot({ path: "docs/short-window.png" });
+  await page.screenshot({ path: "test-results/screenshots/short-window.png" });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

@@ -168,7 +168,7 @@ pnpm test:db                 # 若找不到執行檔：PG_BIN=/path/to/postgresq
 
 測試涵蓋資料表約束、排名與門檻、冪等重試、訪客權限，以及以多條連線實際搶鎖的並發情境（以 `pg_stat_activity` 確認後到者確實在等待鎖）。`tests/db/edge.test.ts` 把 Edge handler 直接接上這個資料庫，驗證 HTTP 契約、跨 instance／並發節流與 24 小時清理。不依賴資料庫的 handler 單元測試（CORS、驗證邊界、錯誤映射、欄位白名單）在 `tests/edge.test.ts`，隨 `pnpm test` 執行。
 
-本機沒有 Deno，`index.ts`（Deno 入口與 PostgREST 呼叫）在本機只經型別檢查；已部署到 Supabase 測試專案並以匿名 HTTP 驗證，結果見 [docs/verification.md](../docs/verification.md)。
+本機沒有 Deno，`index.ts`（Deno 入口與 PostgREST 呼叫）在本機只經型別檢查；已部署到 Supabase 測試專案並以匿名 HTTP 驗證。
 
 使用 Supabase CLI 的完整本機環境（需要 Docker）：
 

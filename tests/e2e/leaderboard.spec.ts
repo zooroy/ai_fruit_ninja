@@ -412,9 +412,9 @@ test.describe("leaderboard presentation", () => {
 
   // 桌面視窗尺寸；手機與平板已不支援遊玩，見 device.spec.ts。
   for (const [label, size, shot] of [
-    ["desktop", { width: 1280, height: 800 }, "docs/leaderboard-desktop.png"],
-    ["narrow-window", { width: 390, height: 844 }, "docs/narrow-window-leaderboard.png"],
-    ["short-window", { width: 844, height: 390 }, "docs/short-window-leaderboard.png"],
+    ["desktop", { width: 1280, height: 800 }, "test-results/screenshots/leaderboard-desktop.png"],
+    ["narrow-window", { width: 390, height: 844 }, "test-results/screenshots/narrow-window-leaderboard.png"],
+    ["short-window", { width: 844, height: 390 }, "test-results/screenshots/short-window-leaderboard.png"],
   ] as const) {
     test(`results board is readable on ${label}`, async ({ page }) => {
       const api = new MockApi();
@@ -456,12 +456,12 @@ test.describe("leaderboard presentation", () => {
     await api.install(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
-    await page.screenshot({ path: "docs/narrow-window-home.png" });
+    await page.screenshot({ path: "test-results/screenshots/narrow-window-home.png" });
     await page.getByRole("button", { name: "排行榜", exact: true }).click();
     await expect(page.getByRole("dialog").locator(".board-row")).toHaveCount(10);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.evaluate(() => (window as any).__xss)).toBeUndefined();
-    await page.screenshot({ path: "docs/narrow-window-dialog.png" });
+    await page.screenshot({ path: "test-results/screenshots/narrow-window-dialog.png" });
   });
 
   test("submitting with the keyboard in a short window", async ({ page }) => {
@@ -477,6 +477,6 @@ test.describe("leaderboard presentation", () => {
     await page.keyboard.press("Enter");
     await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     await expect(board(page).locator(".board-row.mine")).toBeInViewport();
-    await page.screenshot({ path: "docs/short-window-submitted.png" });
+    await page.screenshot({ path: "test-results/screenshots/short-window-submitted.png" });
   });
 });

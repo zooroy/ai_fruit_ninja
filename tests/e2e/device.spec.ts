@@ -40,9 +40,9 @@ async function prepare(page: Page) {
 }
 
 const unsupported = [
-  ["phone-portrait", { width: 390, height: 844 }, "docs/unsupported-phone.png"],
+  ["phone-portrait", { width: 390, height: 844 }, "test-results/screenshots/unsupported-phone.png"],
   ["phone-landscape", { width: 844, height: 390 }, ""],
-  ["tablet", { width: 820, height: 1180 }, "docs/unsupported-tablet.png"],
+  ["tablet", { width: 820, height: 1180 }, "test-results/screenshots/unsupported-tablet.png"],
 ] as const;
 
 for (const [label, viewport, shot] of unsupported) {
