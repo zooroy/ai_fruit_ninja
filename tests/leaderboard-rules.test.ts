@@ -7,52 +7,39 @@ const board = (scores: number[]): Entry[] =>
   scores.map((score, i) => ({ rank: i + 1, id: `e${i}`, name: `p${i}`, score }));
 const full = board([500, 400, 300, 200, 150, 140, 130, 120, 110, 100]);
 
-describe("leaderboard standing and dialogue", () => {
-  it("invites the first hero on an empty board", () => {
+describe("leaderboard standing and result status", () => {
+  it("qualifies the first entry on an empty board as rank 1", () => {
     const s = standing([], 0);
-    expect(s).toEqual({ kind: "empty", rank: 1 });
+    expect(s).toEqual({ kind: "qualified", rank: 1 });
     expect(qualifies(s)).toBe(true);
-    expect(invitation(s)).toBe("森林的英雄榜等著第一位勇者，留下你的大名吧！");
+    expect(invitation(s)).toBe("可排第 1 名");
   });
 
   it("lets a zero score qualify on an incomplete board, with an estimated rank", () => {
     const s = standing(board([300, 200, 100, 50, 40, 30, 20, 10, 0]), 0);
-    expect(s).toEqual({ kind: "open", rank: 10 });
-    expect(qualifies(s)).toBe(true);
-    expect(invitation(s)).toBe("英雄榜還有位置！你有機會登上第 10 名，留下大名吧。");
+    expect(s).toEqual({ kind: "qualified", rank: 10 });
+    expect(invitation(s)).toBe("可排第 10 名");
   });
 
-  it("calls a strictly higher score a new record", () => {
-    const s = standing(full, 505);
-    expect(s).toEqual({ kind: "record", rank: 1 });
-    expect(invitation(s)).toBe("森林的新紀錄就在眼前！留下大名，送出這漂亮的一刀。");
-  });
-
-  it("does not call a tie with first place a new record", () => {
+  it("uses the same format for a new highest score as for other qualified results", () => {
+    expect(invitation(standing(full, 505))).toBe("可排第 1 名");
     expect(standing(full, 500)).toEqual({ kind: "qualified", rank: 2 });
-    expect(standing(board([500, 300]), 500)).toEqual({ kind: "open", rank: 2 });
   });
 
-  it("estimates ordinary qualified ranks with existing ties ahead", () => {
-    const s = standing(full, 200);
-    expect(s).toEqual({ kind: "qualified", rank: 5 });
-    expect(invitation(s)).toBe("漂亮的身手！有機會登上第 5 名，留下勇者的大名吧！");
+  it("estimates qualified ranks with existing ties ahead", () => {
+    expect(standing(full, 200)).toEqual({ kind: "qualified", rank: 5 });
     expect(estimatedRank(full, 250)).toBe(4);
-    expect(invitation(standing(full, 250))).toContain("第 4 名");
+    expect(invitation(standing(full, 250))).toBe("可排第 4 名");
   });
 
-  it("does not qualify a tie with tenth place on a full board", () => {
-    const s = standing(full, 100);
-    expect(s).toEqual({ kind: "tied", cutoff: 100 });
-    expect(qualifies(s)).toBe(false);
-    expect(invitation(s)).toBe("已追平第十名！再得 5 分，就能超越這道紀錄。");
-  });
-
-  it("shows tie and beat gaps for 80 against a 100 cutoff", () => {
-    const s = standing(full, 80);
-    expect(s).toEqual({ kind: "short", cutoff: 100, tieGap: 20, beatGap: 25 });
-    expect(qualifies(s)).toBe(false);
-    expect(invitation(s)).toBe("距離第十名還差 20 分，超越還需 25 分，再挑戰一次吧！");
+  it("gives a tie at tenth place and a lower score the same threshold message", () => {
+    const tie = standing(full, 100);
+    const below = standing(full, 80);
+    expect(tie).toEqual({ kind: "below", cutoff: 100 });
+    expect(below).toEqual({ kind: "below", cutoff: 100 });
+    expect(qualifies(tie)).toBe(false);
+    expect(invitation(tie)).toBe("需超過 100 分才能入榜");
+    expect(invitation(below)).toBe(invitation(tie));
   });
 
   it("qualifies one step above the cutoff", () => {

@@ -1,0 +1,517 @@
+/* 版面與畫面：顏色、圓角、字級一律取自 tokens.css；這裡只有版面尺寸常數。 */
+#world {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* Header ------------------------------------------------------------------ */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  z-index: 5;
+}
+.brand {
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+.top-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* 首頁 -------------------------------------------------------------------- */
+#panel {
+  position: fixed;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  width: min(90%, 550px);
+  text-align: center;
+  z-index: 2;
+}
+h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-display);
+  line-height: 1.15;
+  letter-spacing: -2px;
+  font-weight: 900;
+  text-shadow: 0 2px 20px var(--color-surface);
+}
+h1 span {
+  display: inline-block;
+}
+.rule {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+.privacy {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.device-note {
+  max-width: 360px;
+  margin: 0 auto var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-glass);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+}
+
+/* HUD --------------------------------------------------------------------- */
+#hud {
+  position: fixed;
+  top: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-2) var(--space-5);
+  z-index: 3;
+}
+.hud-score span {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.hud-score strong {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.timer {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+}
+.timer svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.timer circle {
+  fill: none;
+  stroke: var(--color-track);
+  stroke-width: 3;
+}
+#timer-ring {
+  stroke: var(--color-accent);
+  stroke-dasharray: 164;
+}
+.timer strong {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+/* 倒數、試切、飄字 --------------------------------------------------------- */
+#countdown {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 140px;
+  font-weight: 800;
+  color: var(--color-on-primary);
+  text-shadow: 0 6px 40px var(--color-primary);
+  pointer-events: none;
+}
+#tutorial {
+  position: fixed;
+  top: 24%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+}
+#tutorial h2 {
+  margin: 0 0 var(--space-2);
+  font-size: 28px;
+  font-weight: 800;
+}
+#tutorial p {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+.toast {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--color-on-primary);
+  text-shadow: 0 2px 6px var(--color-primary);
+  animation: float 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 6;
+}
+.toast.bomb {
+  text-shadow: 0 2px 6px var(--color-danger);
+}
+@keyframes float {
+  to {
+    transform: translate(-50%, -180%);
+    opacity: 0;
+  }
+}
+
+/* 攝影機卡 ---------------------------------------------------------------- */
+#camera-card {
+  position: fixed;
+  bottom: var(--space-6);
+  left: var(--space-6);
+  width: 170px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  z-index: 4;
+}
+.camera-frame {
+  position: relative;
+}
+.camera-frame video {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  transform: scaleX(-1);
+}
+.camera-guide {
+  position: absolute;
+  inset: 15%;
+  border: 1px dashed var(--color-accent-soft);
+  border-radius: var(--radius-md);
+}
+.camera-status {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+}
+#tracking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-idle);
+}
+#tracking-dot.active {
+  background: var(--color-live);
+}
+#tracking-label {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-strong);
+}
+
+/* 訊息與結算 -------------------------------------------------------------- */
+.message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90%, 440px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-6);
+  text-align: center;
+  z-index: 8;
+}
+.message h2 {
+  margin: 0 0 var(--space-3);
+  font-size: 28px;
+  font-weight: 800;
+}
+#message-copy {
+  margin-bottom: var(--space-5);
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+.message > .btn--primary {
+  margin-top: var(--space-2);
+}
+.message > .btn--ghost {
+  display: block;
+  margin: var(--space-3) auto 0;
+}
+.final-score {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+.final-score small {
+  margin-left: var(--space-1);
+  font-size: var(--font-size-md);
+}
+.stats {
+  display: flex;
+  justify-content: space-around;
+  margin: var(--space-4) 0 var(--space-5);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.stats b {
+  display: block;
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+}
+
+/* 排行榜 ------------------------------------------------------------------ */
+.board {
+  margin: 0 0 var(--space-4);
+  text-align: left;
+}
+.board-line {
+  margin-bottom: var(--space-2);
+  text-align: center;
+  font-size: var(--font-size-md);
+  font-weight: 700;
+}
+.board-detail {
+  margin: 0 0 var(--space-2);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.board-form {
+  margin: var(--space-3) 0;
+}
+.board-label {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+.board-note {
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+.board-input-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.board-input {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px;
+}
+.board-input[readonly] {
+  color: var(--color-text-muted);
+}
+.board-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+.board-field-error {
+  margin-top: var(--space-1);
+}
+.board > .btn--secondary {
+  display: flex;
+  margin: 0 auto var(--space-3);
+}
+.board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.board-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-md);
+  font-weight: 800;
+}
+.board-head .board-title {
+  margin: 0;
+  font-size: 18px;
+}
+.board-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 196px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.board-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+}
+.board-row + .board-row {
+  border-top: 1px solid var(--color-track);
+}
+.board-rank {
+  font-weight: 800;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.board-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.board-score {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.board-row.mine {
+  background: var(--color-accent-soft);
+}
+.board-you {
+  margin-left: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-style: normal;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+.board-empty {
+  margin: var(--space-2) 0;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.board-dialog {
+  width: min(92vw, 400px);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+.board-dialog::backdrop {
+  background: var(--color-overlay);
+}
+.board-panel {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+.board-panel .board-list {
+  max-height: none;
+}
+.board-panel .btn--secondary {
+  display: flex;
+  margin: var(--space-2) auto 0;
+}
+
+/* 窄視窗 ------------------------------------------------------------------ */
+@media (max-width: 650px) {
+  header {
+    padding: var(--space-4);
+  }
+  #hud {
+    top: 72px;
+    gap: var(--space-5);
+  }
+  .hud-score strong {
+    font-size: 26px;
+  }
+  #camera-card {
+    left: var(--space-4);
+    bottom: var(--space-5);
+    width: 115px;
+  }
+  .message {
+    padding: var(--space-5) var(--space-4);
+  }
+  .message h2,
+  #tutorial h2 {
+    font-size: var(--font-size-lg);
+  }
+}
+
+/* 矮視窗：讓結算區的重玩按鈕盡量留在第一屏。 */
+@media (max-height: 550px) {
+  header {
+    padding: var(--space-3) var(--space-5);
+  }
+  #panel {
+    top: 52%;
+  }
+  h1 {
+    font-size: 36px;
+    margin-bottom: var(--space-2);
+  }
+  .rule {
+    margin-bottom: var(--space-3);
+  }
+  .actions {
+    gap: var(--space-2);
+  }
+  .btn--lg {
+    padding: var(--space-2) var(--space-4);
+  }
+  #hud {
+    top: var(--space-3);
+  }
+  .timer {
+    width: 45px;
+    height: 45px;
+  }
+  #camera-card {
+    width: 125px;
+    bottom: var(--space-4);
+  }
+  .message {
+    width: min(90%, 430px);
+    padding: var(--space-4);
+  }
+  .message h2 {
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-1);
+  }
+  .final-score {
+    font-size: 36px;
+  }
+  .stats {
+    margin: var(--space-1) 0 var(--space-3);
+  }
+  .stats b {
+    font-size: 18px;
+  }
+  .board-list {
+    max-height: 132px;
+  }
+}

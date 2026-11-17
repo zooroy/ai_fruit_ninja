@@ -1,0 +1,114 @@
+/* 共用元件：只使用 tokens.css 的變數。 */
+
+/* Button ------------------------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    transform 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 4px 0 var(--color-primary-edge);
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.btn--secondary:hover:not(:disabled) {
+  background: var(--color-on-primary);
+}
+.btn--ghost {
+  background: none;
+  color: var(--color-text-muted);
+}
+.btn--ghost:hover:not(:disabled) {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+.btn--icon {
+  padding: 0;
+  border-color: var(--color-surface-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-glass);
+  color: var(--color-primary);
+}
+.btn--icon:hover:not(:disabled),
+.btn--icon[aria-pressed="true"] {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn--sm {
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--font-size-sm);
+}
+.btn--md {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-md);
+}
+.btn--lg {
+  min-width: 220px;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--font-size-md);
+}
+.btn--icon.btn--sm {
+  width: 32px;
+  height: 32px;
+}
+.btn--icon.btn--md,
+.btn--icon.btn--lg {
+  width: 40px;
+  height: 40px;
+  font-size: var(--font-size-md);
+}
+
+/* Surface ----------------------------------------------------------------- */
+.surface {
+  background: var(--color-surface-glass);
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(16px);
+}
+.surface--dark {
+  background: var(--color-surface-strong);
+  color: var(--color-on-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Status ------------------------------------------------------------------ */
+.status {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--color-text);
+}
+.status--error {
+  color: var(--color-danger);
+}

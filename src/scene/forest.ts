@@ -96,7 +96,6 @@ export class Forest {
   camera = new T.OrthographicCamera();
   width = 12;
   height = 8;
-  low = false;
   private background = new T.Group();
   private objects = new Map<number, T.Group>();
   private effects: {
@@ -234,17 +233,9 @@ export class Forest {
       far: 50,
     });
     this.camera.updateProjectionMatrix();
-    this.renderer.setPixelRatio(this.low ? 1 : Math.min(devicePixelRatio, 1.7));
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
     this.renderer.setSize(rect.width, rect.height, false);
     this.clearTrails();
-  }
-  quality(low: boolean) {
-    this.low = low;
-    this.renderer.shadowMap.enabled = !low;
-    this.background.children.forEach((c, i) => {
-      c.visible = !low || i < 3 || i % 2 === 0;
-    });
-    this.resize();
   }
   clearTrails() {
     for (const t of this.trails.values()) {
@@ -367,7 +358,7 @@ export class Forest {
           spin: sign * 2,
         });
       }
-    for (let i = 0; i < (this.low ? 6 : 15); i++) {
+    for (let i = 0; i < 15; i++) {
       const p = mesh(
         new T.IcosahedronGeometry(0.025 + Math.random() * 0.045),
         e.type === "bomb" ? 0xffce6c : colors[e.kind],

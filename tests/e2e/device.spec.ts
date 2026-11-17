@@ -57,17 +57,17 @@ for (const [label, viewport, shot] of unsupported) {
 
       const note = page.getByRole("note");
       await expect(note).toBeVisible();
-      await expect(note).toContainText("請改用電腦開啟");
+      await expect(note).toContainText("請改用筆電或桌機遊玩");
       await expect(page.getByRole("button", { name: "啟動攝影機" })).toBeHidden();
       await expect(page.locator("#privacy")).toBeHidden();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const noteBox = await note.boundingBox();
-      const boardBox = await page.getByRole("button", { name: "歷史排行 TOP 10" }).boundingBox();
+      const boardBox = await page.getByRole("button", { name: "排行榜", exact: true }).boundingBox();
       expect(boardBox!.y).toBeGreaterThan(noteBox!.y + noteBox!.height);
       if (shot) await page.screenshot({ path: shot });
 
       // 首頁排行：唯讀瀏覽、Escape 關閉、焦點回到入口。
-      const open = page.getByRole("button", { name: "歷史排行 TOP 10" });
+      const open = page.getByRole("button", { name: "排行榜", exact: true });
       await open.click();
       const dialog = page.getByRole("dialog");
       await expect(dialog.locator(".board-row")).toHaveCount(3);
@@ -81,13 +81,13 @@ for (const [label, viewport, shot] of unsupported) {
       await page.evaluate(() => (window as any).__test.setup());
       expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
 
-      // 結算「再挑戰一次」（以開發 hook 進入結算）同樣回到首頁說明。
+      // 結算「再玩一次」（以開發 hook 進入結算）同樣回到首頁說明。
       await page.evaluate(() => {
         const t = (window as any).__test;
         t.start();
         t.finish();
       });
-      await page.getByRole("button", { name: "再挑戰一次" }).click();
+      await page.getByRole("button", { name: "再玩一次" }).click();
       await expect(note).toBeVisible();
       expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
 

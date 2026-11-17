@@ -1,0 +1,72 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800;900&family=Outfit:wght@400;500;700;800&display=swap");
+/* 設計 token：元件與版面只透過這裡取用顏色、間距、圓角、字級與陰影。 */
+:root {
+  --color-bg: #cad7ae;
+  --color-text: #244837;
+  --color-text-muted: #5f6f57;
+  --color-primary: #284f3a;
+  --color-primary-hover: #356144;
+  --color-primary-edge: #173c2a;
+  --color-on-primary: #fff4d6;
+  --color-surface: #fff8e9;
+  --color-surface-glass: #fff8e9ed;
+  --color-surface-border: #ffffff99;
+  --color-surface-strong: #214433;
+  --color-on-strong: #f0f0d6;
+  --color-border: #c6b48f;
+  --color-accent: #b97738;
+  --color-accent-soft: #ffe08a;
+  --color-danger: #a5432a;
+  --color-focus: #edab45;
+  --color-overlay: #213d2c66;
+  --color-track: #ced4b3;
+  --color-live: #aee99d;
+  --color-idle: #bf9c63;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-full: 999px;
+
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 24px;
+  --font-size-display: clamp(40px, 6vw, 72px);
+
+  --shadow-sm: 0 4px 12px #25442d1f;
+  --shadow-lg: 0 20px 60px #26433230;
+
+  font-family: "Outfit", "Noto Sans TC", sans-serif;
+  color: var(--color-text);
+  font-synthesis: none;
+  font-weight: 500;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+[hidden] {
+  display: none !important;
+}

@@ -69,7 +69,7 @@ async function finishRound(page: Page, stats: Stats) {
     Object.assign(t.game, { bombs: 0, maxCombo: 0, ...s });
     t.finish();
   }, stats);
-  await expect(page.getByRole("heading", { name: "漂亮的一刀。" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "本局結束" })).toBeVisible();
 }
 
 const board = (page: Page) => page.locator("#result-stats .board");
@@ -91,18 +91,17 @@ test.describe("home leaderboard dialog", () => {
     });
     await page.goto("/");
     await page.getByRole("button", { name: "靜音", exact: true }).click();
-    await page.getByRole("button", { name: "低畫質" }).click();
 
-    const open = page.getByRole("button", { name: "歷史排行 TOP 10" });
+    const open = page.getByRole("button", { name: "排行榜", exact: true });
     const startBox = await page.getByRole("button", { name: "啟動攝影機" }).boundingBox();
     const openBox = await open.boundingBox();
     expect(openBox!.y).toBeGreaterThan(startBox!.y + startBox!.height);
     await open.click();
-    const dialog = page.getByRole("dialog", { name: "歷史排行 TOP 10" });
+    const dialog = page.getByRole("dialog", { name: "排行榜 TOP 10" });
     await expect(dialog).toBeVisible();
     await expect(dialog.locator(".board-row")).toHaveCount(3);
     await expect(dialog.locator(".board-row").first()).toContainText("高手1");
-    await expect(dialog.locator(".top1 .board-rank")).toHaveText("1");
+    await expect(dialog.locator(".top1, .top2, .top3")).toHaveCount(0);
 
     const close = dialog.getByRole("button", { name: "關閉排行榜" });
     await expect(close).toBeFocused();
@@ -118,7 +117,6 @@ test.describe("home leaderboard dialog", () => {
     expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
     expect(await page.evaluate(() => (window as any).__test.camera.stream)).toBeNull();
     await expect(page.getByRole("button", { name: "靜音", exact: true })).toHaveAttribute("aria-pressed", "true");
-    expect(await page.evaluate(() => (window as any).__test.forest.low)).toBe(true);
 
     // 鍵盤開啟、按鈕關閉。
     await open.press("Enter");
@@ -139,17 +137,17 @@ test.describe("home leaderboard dialog", () => {
       return false;
     });
     await page.goto("/");
-    await page.getByRole("button", { name: "歷史排行 TOP 10" }).click();
+    await page.getByRole("button", { name: "排行榜", exact: true }).click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog.getByRole("status")).toHaveText("森林信使正在取回英雄榜…");
+    await expect(dialog.getByRole("status")).toHaveText("載入中…");
     release();
-    await expect(dialog.getByText("英雄榜還空著，等你寫下第一筆紀錄。")).toBeVisible();
+    await expect(dialog.getByText("尚無紀錄")).toBeVisible();
     await page.keyboard.press("Escape");
 
     api.next.GET.push((route) => route.fulfill({ status: 503, body: "down" }).then(() => true));
-    await page.getByRole("button", { name: "歷史排行 TOP 10" }).click();
-    await expect(dialog.getByText("森林信使暫時迷路了，重試看看吧！")).toBeVisible();
-    await expect(dialog.getByText("英雄榜還空著")).toBeHidden();
+    await page.getByRole("button", { name: "排行榜", exact: true }).click();
+    await expect(dialog.getByText("無法載入排行榜")).toBeVisible();
+    await expect(dialog.getByText("尚無紀錄")).toBeHidden();
     const retry = dialog.getByRole("button", { name: "重新載入" });
     await expect(retry).toBeFocused();
     // 錯誤狀態下 Tab 在關閉與重試之間循環。
@@ -165,8 +163,8 @@ test.describe("home leaderboard dialog", () => {
   test("explains an unconfigured service", async ({ page }) => {
     await page.addInitScript(() => ((window as any).__leaderboardUrl = ""));
     await page.goto("/");
-    await page.getByRole("button", { name: "歷史排行 TOP 10" }).click();
-    await expect(page.getByRole("dialog").getByText("森林英雄榜還沒開張")).toBeVisible();
+    await page.getByRole("button", { name: "排行榜", exact: true }).click();
+    await expect(page.getByRole("dialog").getByText("排行榜未啟用")).toBeVisible();
   });
 });
 
@@ -177,16 +175,16 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 150, fruits: 15, bombs: 1, maxCombo: 3 });
-    await expect(board(page).getByRole("status")).toHaveText("英雄榜還有位置！你有機會登上第 3 名，留下大名吧。");
+    await expect(board(page).getByRole("status")).toHaveText("可排第 3 名");
     await expect(rows(page)).toHaveCount(3);
-    const input = page.getByLabel("留下大名");
+    const input = page.getByLabel("名字");
     await expect(input).toBeVisible();
-    await expect(page.getByText("名字會公開顯示在排行榜")).toBeVisible();
+    await expect(page.getByText("公開顯示，可留白")).toBeVisible();
     expect(await page.evaluate(() => (window as any).__test.camera.stream)).toBeNull();
 
     await input.fill("   ");
     await page.getByRole("button", { name: "送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
+    await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     await expect(input).toBeHidden();
     const mine = board(page).locator(".board-row.mine");
     await expect(mine).toContainText("不知名的勇者");
@@ -204,8 +202,8 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 200, fruits: 20 });
-    await expect(board(page).getByRole("status")).toHaveText("森林的新紀錄就在眼前！留下大名，送出這漂亮的一刀。");
-    await expect(page.getByLabel("留下大名")).toBeVisible();
+    await expect(board(page).getByRole("status")).toHaveText("可排第 1 名");
+    await expect(page.getByLabel("名字")).toBeVisible();
   });
 
   test("unqualified rounds show gaps without a form", async ({ page }) => {
@@ -214,14 +212,14 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 80, fruits: 8 });
-    await expect(board(page).getByRole("status")).toHaveText("距離第十名還差 20 分，超越還需 25 分，再挑戰一次吧！");
-    await expect(page.getByLabel("留下大名")).toBeHidden();
+    await expect(board(page).getByRole("status")).toHaveText("需超過 100 分才能入榜");
+    await expect(page.getByLabel("名字")).toBeHidden();
     await expect(rows(page)).toHaveCount(10);
 
     await page.evaluate(() => (window as any).__test.home());
     await finishRound(page, { score: 100, fruits: 10 });
-    await expect(board(page).getByRole("status")).toHaveText("已追平第十名！再得 5 分，就能超越這道紀錄。");
-    await expect(page.getByLabel("留下大名")).toBeHidden();
+    await expect(board(page).getByRole("status")).toHaveText("需超過 100 分才能入榜");
+    await expect(page.getByLabel("名字")).toBeHidden();
     expect(api.posts).toHaveLength(0);
   });
 
@@ -230,13 +228,13 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 40, fruits: 4 });
-    await expect(board(page).getByRole("status")).toHaveText("森林的英雄榜等著第一位勇者，留下你的大名吧！");
-    await page.getByLabel("留下大名").fill("不想送出");
-    await page.getByRole("button", { name: "返回森林" }).click();
+    await expect(board(page).getByRole("status")).toHaveText("可排第 1 名");
+    await page.getByLabel("名字").fill("不想送出");
+    await page.getByRole("button", { name: "返回首頁" }).click();
     await expect(page.getByRole("button", { name: "啟動攝影機" })).toBeVisible();
     await finishRound(page, { score: 40, fruits: 4 });
-    await page.getByRole("button", { name: "再挑戰一次" }).click();
-    await expect(page.getByText("正在喚醒森林…")).toBeVisible();
+    await page.getByRole("button", { name: "再玩一次" }).click();
+    await expect(page.getByText("正在啟動攝影機…")).toBeVisible();
     expect(api.posts).toHaveLength(0);
     expect(api.rows).toHaveLength(0);
   });
@@ -247,13 +245,13 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 120, fruits: 12 });
-    await expect(page.getByLabel("留下大名")).toBeVisible();
+    await expect(page.getByLabel("名字")).toBeVisible();
     api.insert("剛來的高手", 130, "other"); // 另一裝置在留名期間取得第十名
-    await page.getByLabel("留下大名").fill("阿明");
-    await page.getByLabel("留下大名").press("Enter");
-    await expect(board(page).getByRole("status")).toHaveText("又有高手刷新紀錄了！這次未能入榜，再挑戰一次吧。");
-    await expect(board(page).locator(".board-detail")).toHaveText("距離第十名還差 10 分，超越還需 15 分，再挑戰一次吧！");
-    await expect(page.getByLabel("留下大名")).toBeHidden();
+    await page.getByLabel("名字").fill("阿明");
+    await page.getByLabel("名字").press("Enter");
+    await expect(board(page).getByRole("status")).toHaveText("資格已失效");
+    await expect(board(page).locator(".board-detail")).toHaveText("需超過 130 分才能入榜");
+    await expect(page.getByLabel("名字")).toBeHidden();
     await expect(rows(page).last()).toContainText("剛來的高手");
     expect(api.rows.some((r) => r.name === "阿明")).toBe(false);
   });
@@ -263,16 +261,16 @@ test.describe("result leaderboard", () => {
     await api.install(page);
     await page.goto("/");
     await finishRound(page, { score: 40, fruits: 4 });
-    const input = page.getByLabel("留下大名");
+    const input = page.getByLabel("名字");
     await input.fill("一".repeat(21));
     await page.getByRole("button", { name: "送出" }).click();
-    await expect(page.getByRole("alert")).toHaveText("名字最多 20 個字。");
+    await expect(page.getByRole("alert")).toHaveText("名字最多 20 字，且不可含控制字元");
     await expect(input).toHaveAttribute("aria-invalid", "true");
     await expect(input).toHaveValue("一".repeat(21));
     expect(api.posts).toHaveLength(0);
     await input.fill("🍉".repeat(20));
     await page.getByRole("button", { name: "送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
+    await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     expect(api.rows[0].name).toBe("🍉".repeat(20));
   });
 });
@@ -284,12 +282,12 @@ test.describe("result leaderboard failures", () => {
     api.next.GET.push((route) => route.abort("failed").then(() => true));
     await page.goto("/");
     await finishRound(page, { score: 40, fruits: 4 });
-    await expect(board(page).getByRole("status")).toHaveText("森林信使暫時迷路了，重試看看吧！");
-    await expect(page.getByLabel("留下大名")).toBeHidden();
+    await expect(board(page).getByRole("status")).toHaveText("無法載入排行榜");
+    await expect(page.getByLabel("名字")).toBeHidden();
     await expect(page.locator(".final-score")).toContainText("40");
-    await expect(page.getByRole("button", { name: "再挑戰一次" })).toBeVisible();
-    await page.getByRole("button", { name: "重新載入榜單" }).click();
-    await expect(page.getByLabel("留下大名")).toBeVisible();
+    await expect(page.getByRole("button", { name: "再玩一次" })).toBeVisible();
+    await page.getByRole("button", { name: "重新載入" }).click();
+    await expect(page.getByLabel("名字")).toBeVisible();
     expect(await page.evaluate(() => (window as any).__test.mode)).toBe("results");
   });
 
@@ -306,14 +304,14 @@ test.describe("result leaderboard failures", () => {
       await route.abort("connectionreset");
       return true;
     });
-    const input = page.getByLabel("留下大名");
+    const input = page.getByLabel("名字");
     await input.fill("斷線勇者");
     await page.getByRole("button", { name: "送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("森林信使暫時迷路了，重試看看吧！");
+    await expect(board(page).getByRole("status")).toHaveText("送出失敗，請重試");
     await expect(input).toHaveJSProperty("readOnly", true);
-    await expect(page.getByRole("button", { name: "再挑戰一次" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "再玩一次" })).toBeEnabled();
     await page.getByRole("button", { name: "重新送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
+    await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     expect(api.posts).toHaveLength(2);
     expect(api.posts[1]).toEqual(api.posts[0]);
     expect(api.rows).toHaveLength(1);
@@ -340,7 +338,7 @@ test.describe("result leaderboard failures", () => {
     await expect(page.getByRole("button", { name: "重新送出" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "重新送出" })).toBeEnabled({ timeout: 4000 });
     await page.getByRole("button", { name: "重新送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
+    await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     expect(api.rows).toHaveLength(1);
   });
 
@@ -362,7 +360,7 @@ test.describe("result leaderboard failures", () => {
       return true;
     });
     await page.getByRole("button", { name: "送出" }).click();
-    await expect(board(page).getByRole("status")).toHaveText("紀錄已保存，榜單又有新高手了！");
+    await expect(board(page).getByRole("status")).toHaveText("已保存，但未在前十名");
     await expect(board(page).locator(".board-row.mine")).toHaveCount(0);
   });
 
@@ -370,10 +368,10 @@ test.describe("result leaderboard failures", () => {
     await page.addInitScript(() => ((window as any).__leaderboardUrl = ""));
     await page.goto("/");
     await finishRound(page, { score: 60, fruits: 6 });
-    await expect(board(page).getByRole("status")).toHaveText("森林英雄榜還沒開張，這局成績不會保存。");
-    await expect(page.getByLabel("留下大名")).toBeHidden();
-    await page.getByRole("button", { name: "再挑戰一次" }).click();
-    await expect(page.getByText("正在喚醒森林…")).toBeVisible();
+    await expect(board(page).getByRole("status")).toHaveText("排行榜未啟用，本局成績不會保存");
+    await expect(page.getByLabel("名字")).toBeHidden();
+    await page.getByRole("button", { name: "再玩一次" }).click();
+    await expect(page.getByText("正在啟動攝影機…")).toBeVisible();
   });
 
   test("a late response from the previous round does not touch the new screen", async ({ page }) => {
@@ -394,16 +392,16 @@ test.describe("result leaderboard failures", () => {
       return true;
     });
     await finishRound(page, { score: 40, fruits: 4 });
-    await expect(board(page).getByRole("status")).toHaveText("森林信使正在取回英雄榜…");
+    await expect(board(page).getByRole("status")).toHaveText("載入中…");
     const firstRound = await page.evaluate(() => (window as any).__test.roundId);
-    await page.getByRole("button", { name: "返回森林" }).click();
+    await page.getByRole("button", { name: "返回首頁" }).click();
     await finishRound(page, { score: 350, fruits: 35 });
     expect(await page.evaluate(() => (window as any).__test.roundId)).not.toBe(firstRound);
-    await expect(board(page).getByRole("status")).toHaveText("森林的新紀錄就在眼前！留下大名，送出這漂亮的一刀。");
+    await expect(board(page).getByRole("status")).toHaveText("可排第 1 名");
     release();
     await page.waitForTimeout(300);
     await expect(page.getByText("上一局的回應")).toHaveCount(0);
-    await expect(board(page).getByRole("status")).toHaveText("森林的新紀錄就在眼前！留下大名，送出這漂亮的一刀。");
+    await expect(board(page).getByRole("status")).toHaveText("可排第 1 名");
     await expect(page.locator(".final-score")).toContainText("350");
   });
 });
@@ -444,11 +442,11 @@ test.describe("leaderboard presentation", () => {
         }),
       ).toBe(true);
       await page.screenshot({ path: shot });
-      const replay = page.getByRole("button", { name: "再挑戰一次" });
+      const replay = page.getByRole("button", { name: "再玩一次" });
       await replay.scrollIntoViewIfNeeded();
       await expect(replay).toBeInViewport();
       await replay.click();
-      await expect(page.getByText("正在喚醒森林…")).toBeVisible();
+      await expect(page.getByText("正在啟動攝影機…")).toBeVisible();
     });
   }
 
@@ -459,7 +457,7 @@ test.describe("leaderboard presentation", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await page.screenshot({ path: "docs/narrow-window-home.png" });
-    await page.getByRole("button", { name: "歷史排行 TOP 10" }).click();
+    await page.getByRole("button", { name: "排行榜", exact: true }).click();
     await expect(page.getByRole("dialog").locator(".board-row")).toHaveCount(10);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.evaluate(() => (window as any).__xss)).toBeUndefined();
@@ -473,11 +471,11 @@ test.describe("leaderboard presentation", () => {
     await page.setViewportSize({ width: 844, height: 390 });
     await page.goto("/");
     await finishRound(page, { score: 100, fruits: 10 });
-    const input = page.getByLabel("留下大名");
+    const input = page.getByLabel("名字");
     await input.focus();
     await page.keyboard.type("橫向勇者");
     await page.keyboard.press("Enter");
-    await expect(board(page).getByRole("status")).toHaveText("你的名字已刻上森林英雄榜！");
+    await expect(board(page).getByRole("status")).toHaveText("已登上排行榜");
     await expect(board(page).locator(".board-row.mine")).toBeInViewport();
     await page.screenshot({ path: "docs/short-window-submitted.png" });
   });

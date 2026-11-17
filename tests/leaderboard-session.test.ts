@@ -123,7 +123,10 @@ describe("result session", () => {
     const { session, submits } = await loaded([]);
     await session.submit("一".repeat(21));
     expect(submits).toHaveLength(0);
-    expect(session.state).toMatchObject({ status: "ready", qualified: true, fieldError: "名字最多 20 個字。" });
+    expect(session.state).toMatchObject({ status: "ready", qualified: true, fieldError: "名字最多 20 字，且不可含控制字元" });
+    await session.submit("a\nb");
+    expect(submits).toHaveLength(0);
+    expect(session.state).toMatchObject({ fieldError: "名字最多 20 字，且不可含控制字元" });
     void session.submit("一".repeat(20));
     expect(submits).toHaveLength(1);
   });
@@ -162,7 +165,7 @@ describe("result session", () => {
       lost: true,
       qualified: false,
       entries: latest,
-      standing: { kind: "short", tieGap: 10, beatGap: 15 },
+      standing: { kind: "below", cutoff: 130 },
     });
     await session.submit("again");
     expect(submits).toHaveLength(1);

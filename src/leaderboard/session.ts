@@ -7,7 +7,7 @@ import {
   type LeaderboardClient,
   type SubmitPayload,
 } from "./client";
-import { nameErrors, qualifies, standing, type Standing } from "./rules";
+import { nameError, qualifies, standing, type Standing } from "./rules";
 
 export type Snapshot = Readonly<{
   submissionId: string;
@@ -104,7 +104,7 @@ export class ResultSession {
     if (!this.payload) {
       const name = normalizeName(rawName);
       if (!name.ok) {
-        this.set(this.ready(entries, false, nameErrors[name.reason]));
+        this.set(this.ready(entries, false, nameError));
         return;
       }
       this.payload = Object.freeze({ ...this.snapshot, name: name.name });
@@ -134,7 +134,7 @@ export class ResultSession {
       } else if (err.kind === "rejected" && err.status === 400) {
         // 確定未寫入，才允許修改內容。
         this.payload = null;
-        if (err.code === "invalid_name") this.set(this.ready(latest, false, nameErrors.invalid));
+        if (err.code === "invalid_name") this.set(this.ready(latest, false, nameError));
         else this.fail(latest, "invalid", null);
       } else if (err.kind === "rejected" && err.status === 409) {
         this.fail(latest, "conflict", payload);

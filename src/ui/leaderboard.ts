@@ -2,53 +2,35 @@
 import { LeaderboardError, type Entry, type LeaderboardClient } from "../leaderboard/client";
 import { invitation, lines } from "../leaderboard/rules";
 import type { ResultSession, SessionState } from "../leaderboard/session";
+import { button, h, status, surface } from "./dom";
 
-function node<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className = "",
-  text = "",
-): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  if (className) el.className = className;
-  if (text) el.textContent = text;
-  return el;
-}
+const TITLE = "排行榜 TOP 10";
 
-/** 木牌榜單列表；highlight 為本局成功紀錄的 id。 */
+/** 榜單列表；highlight 為本局成功紀錄的 id。 */
 export function renderList(list: HTMLOListElement, entries: readonly Entry[], highlight = "") {
   list.replaceChildren(
     ...entries.map((e) => {
-      const row = node("li", "board-row");
-      if (e.rank <= 3) row.classList.add(`top${e.rank}`);
-      const badge = node("span", "board-rank", String(e.rank));
-      badge.setAttribute("aria-label", `第 ${e.rank} 名`);
-      const name = node("span", "board-name", e.name);
-      name.title = e.name;
-      const score = node("span", "board-score", String(e.score));
-      score.setAttribute("aria-label", `${e.score} 分`);
-      row.append(badge, name, score);
+      const name = h("span", { className: "board-name", text: e.name, attrs: { title: e.name } });
+      const row = h("li", { className: "board-row" }, [
+        h("span", { className: "board-rank", text: String(e.rank), attrs: { "aria-label": `第 ${e.rank} 名` } }),
+        name,
+        h("span", { className: "board-score", text: String(e.score), attrs: { "aria-label": `${e.score} 分` } }),
+      ]);
       if (e.id === highlight) {
         row.classList.add("mine");
         row.setAttribute("aria-current", "true");
-        name.append(node("em", "board-you", "你"));
+        name.append(h("em", { className: "board-you", text: "你" }));
       }
       return row;
     }),
   );
 }
 
-function sign(titleId: string) {
-  const wrap = node("div", "board-sign");
-  const head = node("div", "board-head");
-  const eyebrow = node("span", "board-eyebrow", "HALL OF HEROES");
-  const title = node("h3", "board-title", "歷史排行 TOP 10");
-  title.id = titleId;
-  head.append(eyebrow, title);
-  const list = node("ol", "board-list");
-  list.setAttribute("aria-labelledby", titleId);
-  const empty = node("p", "board-empty", lines.emptyBoard);
-  wrap.append(head, list, empty);
-  return { wrap, head, list, empty };
+function boardList(titleId: string) {
+  const title = h("h3", { className: "board-title", id: titleId, text: TITLE });
+  const list = h("ol", { className: "board-list", attrs: { "aria-labelledby": titleId } });
+  const empty = h("p", { className: "board-empty", text: lines.emptyBoard });
+  return { title, list, empty };
 }
 
 // ---------------------------------------------------------------------------
@@ -58,30 +40,28 @@ export function setupHomeLeaderboard(
   trigger: HTMLButtonElement,
   getClient: () => LeaderboardClient | null,
 ) {
-  const dialog = node("dialog", "board-dialog");
-  dialog.setAttribute("aria-labelledby", "board-dialog-title");
-  const { wrap, head, list, empty } = sign("board-dialog-title");
-  const close = node("button", "board-close", "✕");
-  close.type = "button";
-  close.setAttribute("aria-label", "關閉排行榜");
-  head.append(close);
-  const status = node("p", "board-line");
-  status.setAttribute("role", "status");
-  const retry = node("button", "board-retry", "重新載入");
-  retry.type = "button";
-  wrap.insertBefore(status, list);
-  wrap.append(retry);
-  dialog.append(wrap);
+  const { title, list, empty } = boardList("board-dialog-title");
+  const close = button({ variant: "icon", size: "sm", label: "✕", ariaLabel: "關閉排行榜" });
+  const line = status({ live: "polite", className: "board-line" });
+  const retry = button({ variant: "secondary", size: "sm", label: "重新載入" });
+  const panel = surface({ className: "board-panel" }, [
+    h("div", { className: "board-head" }, [title, close]),
+    line,
+    list,
+    empty,
+    retry,
+  ]);
+  const dialog = h("dialog", { className: "board-dialog", attrs: { "aria-labelledby": "board-dialog-title" } }, [panel]);
   document.body.append(dialog);
 
   let controller: AbortController | null = null;
   const view = (state: "loading" | "ready" | "error" | "unconfigured", entries: Entry[] = []) => {
-    status.textContent =
+    line.textContent =
       state === "loading" ? lines.loading
       : state === "error" ? lines.loadError
       : state === "unconfigured" ? lines.unconfiguredHome
       : "";
-    status.hidden = state === "ready";
+    line.hidden = state === "ready";
     list.setAttribute("aria-busy", String(state === "loading"));
     renderList(list, entries);
     list.hidden = state !== "ready" || !entries.length;
@@ -139,22 +119,15 @@ export function setupHomeLeaderboard(
 // 結算區
 
 export function mountResultBoard(container: HTMLElement, session: ResultSession) {
-  const section = node("section", "board");
-  section.setAttribute("aria-label", "森林英雄榜");
-  const line = node("p", "board-line");
-  line.setAttribute("role", "status");
-  const detail = node("p", "board-detail");
+  const line = status({ live: "polite", className: "board-line" });
+  const detail = h("p", { className: "board-detail" });
 
-  const form = node("form", "board-form");
-  form.noValidate = true;
-  const label = node("label", "board-label", "留下大名");
-  label.htmlFor = "board-name";
-  const note = node("span", "board-note", "名字會公開顯示在排行榜，可留白");
-  label.append(note);
-  const row = node("div", "board-input-row");
-  const input = node("input", "board-input");
-  Object.assign(input, {
+  const input = h("input", {
+    className: "board-input",
     id: "board-name",
+    attrs: { "aria-describedby": "board-name-error" },
+  });
+  Object.assign(input, {
     name: "name",
     type: "text",
     autocomplete: "nickname",
@@ -162,19 +135,29 @@ export function mountResultBoard(container: HTMLElement, session: ResultSession)
     enterKeyHint: "send",
     spellcheck: false,
   });
-  input.setAttribute("aria-describedby", "board-name-error");
-  const send = node("button", "board-submit", "送出");
-  send.type = "submit";
-  row.append(input, send);
-  const fieldError = node("p", "board-field-error");
-  fieldError.id = "board-name-error";
-  fieldError.setAttribute("role", "alert");
-  form.append(label, row, fieldError);
+  const label = h("label", { className: "board-label", text: "名字" }, [
+    h("span", { className: "board-note", text: "公開顯示，可留白" }),
+  ]);
+  label.htmlFor = "board-name";
+  const send = button({ variant: "primary", size: "md", label: "送出", type: "submit" });
+  const fieldError = status({ tone: "error", live: "assertive", id: "board-name-error", className: "board-field-error" });
+  const form = h("form", { className: "board-form" }, [
+    label,
+    h("div", { className: "board-input-row" }, [input, send]),
+    fieldError,
+  ]);
+  form.noValidate = true;
 
-  const retry = node("button", "board-retry");
-  retry.type = "button";
-  const { wrap, list, empty } = sign("board-result-title");
-  section.append(line, detail, form, retry, wrap);
+  const retry = button({ variant: "secondary", size: "sm", label: "" });
+  const { title, list, empty } = boardList("board-result-title");
+  const wrap = h("div", { className: "board-list-wrap" }, [title, list, empty]);
+  const section = h("section", { className: "board", attrs: { "aria-label": "排行榜" } }, [
+    line,
+    detail,
+    form,
+    retry,
+    wrap,
+  ]);
   container.append(section);
 
   let timer = 0;
@@ -198,7 +181,7 @@ export function mountResultBoard(container: HTMLElement, session: ResultSession)
         break;
       case "load-error":
         text = lines.loadError;
-        retryText = "重新載入榜單";
+        retryText = "重新載入";
         break;
       case "ready":
         text = state.lost ? lines.lost : invitation(state.standing);
@@ -240,6 +223,7 @@ export function mountResultBoard(container: HTMLElement, session: ResultSession)
     input.readOnly = locked;
     send.hidden = !!retryText;
     send.disabled = state.status === "submitting";
+    send.setAttribute("aria-busy", String(state.status === "submitting"));
     send.textContent = state.status === "submitting" ? "送出中…" : "送出";
     fieldError.textContent = error;
     fieldError.hidden = !error;
