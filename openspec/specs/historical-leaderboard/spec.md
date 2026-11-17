@@ -18,48 +18,48 @@
 - **THEN** 最初顯示空榜提示，重新載入後看見已提交紀錄而非僅本機資料
 
 ### Requirement: Welcome leaderboard access
-系統 SHALL 在首頁主要入口（可遊玩裝置為「啟動攝影機」按鈕，不支援的裝置為請改用電腦的說明）下方提供「歷史排行 TOP 10」按鈕；開啟與關閉排行榜不得要求攝影機權限、啟動倒數或重設遊戲設定。不支援遊玩的裝置 SHALL 仍可唯讀瀏覽排行榜。
+系統 SHALL 在首頁主要入口（可遊玩裝置為「啟動攝影機」按鈕，不支援的裝置為請改用電腦的說明）下方提供「排行榜」按鈕；開啟與關閉排行榜不得要求攝影機權限、啟動倒數或重設遊戲設定。不支援遊玩的裝置 SHALL 仍可唯讀瀏覽排行榜。
 
 #### Scenario: Browse without camera
 - **WHEN** 玩家從首頁開啟排行榜後關閉
-- **THEN** 顯示排行榜並返回原首頁，不呼叫攝影機授權，靜音及畫質設定不變
+- **THEN** 顯示排行榜並返回原首頁，不呼叫攝影機授權，靜音設定不變
 
 #### Scenario: Browse on an unsupported device
-- **WHEN** 玩家以手機或平板開啟首頁並點選歷史排行
+- **WHEN** 玩家以手機或平板開啟首頁並點選排行榜
 - **THEN** 顯示與桌面相同的前十名資料，沒有留名或開始遊戲的控制項
 
 ### Requirement: Result comparison and qualification
-系統 SHALL 在結算分數區顯示歷史榜單與本局比較。榜單未滿十筆時本局具資格；滿十筆時本局分數 MUST 嚴格大於第十名才具資格。僅已成功取得榜單且本局具資格、尚未提交時顯示名字欄與送出。未達標時 SHALL 顯示追平差距與超越所需分數，後者依現有五分最小計分單位計算。
+系統 SHALL 在結算分數區顯示歷史榜單與本局比較。榜單未滿十筆時本局具資格；滿十筆時本局分數 MUST 嚴格大於第十名才具資格。僅已成功取得榜單且本局具資格、尚未提交時顯示名字欄與送出。未達標時 SHALL 只顯示入榜門檻（需超過第十名的分數），同分與低於第十名使用相同提示。
 
 #### Scenario: Tie at cutoff
 - **WHEN** 第十名為 100 分且本局也是 100 分
-- **THEN** 不顯示留名欄，提示已追平第十名、再得 5 分即可超越
+- **THEN** 不顯示留名欄，提示需超過 100 分
 
 #### Scenario: Below cutoff
 - **WHEN** 第十名為 100 分而本局為 80 分
-- **THEN** 顯示相差 20 分、超越還需 25 分，不顯示送出控制項
+- **THEN** 提示需超過 100 分，不顯示送出控制項
 
 #### Scenario: Incomplete board
 - **WHEN** 榜單有九筆或更少，且本局為 0 分
 - **THEN** 本局仍有資格留名，顯示預估名次但不宣稱已儲存
 
-### Requirement: Contextual forest dialogue
-系統 SHALL 根據空榜或未滿榜、新最高分、其他合資格成績、未達標、成功、資格失效及服務失敗顯示相應繁體中文森林風格對白。預估名次 SHALL 將既有同分紀錄排在本局之前；未提交不得稱為正式上榜。新最高分指非空榜中嚴格高於第一名。
+### Requirement: Precise result status
+系統 SHALL 以簡短、精確的繁體中文提示呈現結算排行狀態，不使用角色化或風格化對白。具資格時 SHALL 顯示預估名次，預估名次將既有同分紀錄排在本局之前；未提交不得稱為已上榜。未達標時 SHALL 顯示入榜門檻。成功、已保存但跌出前十、資格失效、讀取失敗、送出失敗、限流、內容衝突、資料無效及未啟用服務 SHALL 各有一句可區分的說明。
 
-#### Scenario: New record invitation
+#### Scenario: Qualified result
+- **WHEN** 本局預估為第四名且尚未送出
+- **THEN** 顯示可排第 4 名並提供留名欄，不顯示已保存
+
+#### Scenario: New highest score
 - **WHEN** 本局超過非空榜最高分且尚未送出
-- **THEN** 邀請留下大名挑戰新紀錄，提供送出，但不顯示已保存訊息
+- **THEN** 顯示可排第 1 名，與其他合資格成績使用相同格式
 
-#### Scenario: Qualified ordinary result
-- **WHEN** 本局預估為第四名
-- **THEN** 對白指出有機會登上第 4 名，並邀請留名
-
-#### Scenario: No new highest score
-- **WHEN** 本局追平第一名且仍符合前十名資格
-- **THEN** 使用一般入榜或未滿榜邀請，不宣稱打破最高分
+#### Scenario: Saved but pushed out
+- **WHEN** 送出成功，但回傳榜單已不含本局紀錄
+- **THEN** 顯示已保存但未在前十名，不宣稱登上排行榜
 
 ### Requirement: Optional public display name
-系統 SHALL 只在玩家主動送出時提交本局結果，將名字去除頭尾空白後，空值預設為「不知名的勇者」。名字最多二十個 Unicode code points，超長或包含控制字元時顯示錯誤而不寫入。名字 SHALL 以純文字顯示，並在表單說明會公開出現在排行榜；不得要求帳號或真實姓名。
+系統 SHALL 只在玩家主動送出時提交本局結果，將名字去除頭尾空白後，空值預設為「不知名的勇者」。名字最多二十個 Unicode code points，超長或包含控制字元時顯示同一則說明這兩項限制的錯誤，且不寫入。名字 SHALL 以純文字顯示，並在表單說明會公開出現在排行榜；不得要求帳號或真實姓名。
 
 #### Scenario: Default name
 - **WHEN** 合資格玩家未填名字或只填空白後送出
@@ -68,6 +68,10 @@
 #### Scenario: Unsafe markup and long name
 - **WHEN** 玩家送出含 HTML 標記的合法長度名字，或超過二十字的名字
 - **THEN** 前者只顯示文字而不執行標記，後者被拒絕且保留可修正內容
+
+#### Scenario: Invalid name message
+- **WHEN** 玩家送出超過二十字的名字，或含控制字元的名字
+- **THEN** 兩者顯示相同的錯誤說明，指出最多 20 字且不可含控制字元
 
 #### Scenario: Skip submission
 - **WHEN** 玩家未按送出即選擇重玩或返回首頁
@@ -78,7 +82,7 @@
 
 #### Scenario: Qualification lost while typing
 - **WHEN** 玩家留名期間第十名提升至本局同分或更高
-- **THEN** 送出遭拒且無新增紀錄，更新榜單、隱藏留名欄，提示紀錄被超越及最新差距
+- **THEN** 送出遭拒且無新增紀錄，更新榜單、隱藏留名欄，提示資格已失效及最新入榜門檻
 
 #### Scenario: Concurrent last slot
 - **WHEN** 榜單有九筆較高分紀錄，兩個同分低分新成績同時送出
@@ -117,12 +121,16 @@
 - **WHEN** 玩家送出後收到網路錯誤
 - **THEN** 不宣稱成功，保留本局與原提交內容，提供重試及離開選項
 
-### Requirement: Forest themed accessible presentation
-系統 SHALL 沿用森林暖色、木牌與葉片視覺呈現排行榜，以名次數字及前三名徽章輔助辨識。首頁排行視窗 SHALL 支援鍵盤開關、焦點留在視窗內及關閉後回到入口；結算榜單與留名區 SHALL 在桌面窄視窗與矮視窗可捲動且不遮住重玩，姓名輸入有標籤、狀態有可讀提示，長名字不得撐破版面。
+### Requirement: Accessible leaderboard presentation
+系統 SHALL 以簡潔列表呈現排行榜，每列只有名次、名字與分數，不使用木牌、葉片或前三名徽章裝飾；本局成功提交的紀錄 SHALL 以強調色及「你」標示。首頁排行視窗 SHALL 支援鍵盤開關、焦點留在視窗內及關閉後回到入口；結算榜單與留名區 SHALL 在桌面窄視窗與矮視窗可捲動且不遮住重玩，姓名輸入有標籤、狀態有可讀提示，長名字不得撐破版面。
 
-#### Scenario: Mobile and keyboard browsing
-- **WHEN** 玩家在直向手機開啟首頁排行查看十筆長名字，或使用鍵盤開啟並以 Escape 關閉首頁排行
-- **THEN** 無水平溢出且可操作所有控制項，關閉後焦點返回歷史排行按鈕
+#### Scenario: Keyboard browsing
+- **WHEN** 玩家使用鍵盤開啟首頁排行榜並以 Escape 關閉
+- **THEN** 焦點在視窗內循環，關閉後返回排行榜按鈕
+
+#### Scenario: Own entry highlighted
+- **WHEN** 玩家成功送出並仍在前十名
+- **THEN** 該列以強調色與「你」標示，其他列無名次徽章
 
 #### Scenario: Narrow window results
 - **WHEN** 玩家在約 390 px 寬的桌面視窗完成一局，結算區顯示十筆長名字與留名欄
