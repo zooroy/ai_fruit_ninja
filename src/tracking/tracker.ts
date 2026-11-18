@@ -31,7 +31,8 @@ export class Tracker {
         };
         worker!.onmessage = ({ data }) => {
           clearTimeout(timer);
-          data.type === "ready" ? resolve() : reject(Error(data.message));
+          if (data.type === "ready") resolve();
+          else reject(Error(data.message));
         };
         worker!.postMessage({ type: "init", base });
       });

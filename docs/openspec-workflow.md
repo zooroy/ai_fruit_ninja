@@ -36,14 +36,20 @@ archive：同步正式 specs → 封存 change
 /openspec-apply-change add-difficulty-selection
 ```
 
-助手依 `tasks.md` 實作並更新完成勾選。開發時應保留攝影機、追蹤、純遊戲規則與場景的模組界線，並依變更範圍驗證：
+助手依 `tasks.md` 實作並更新完成勾選。開發時應保留攝影機、追蹤、純遊戲規則與場景的模組界線。
+
+驗證由 CI 品質閘門（`.github/workflows/ci.yml`）在 PR 與推送 `main` 時執行，未通過不會部署。本機可先跑相同的檢查：
 
 ```sh
-pnpm check
-pnpm test
+pnpm check                          # TypeScript
+pnpm lint                           # ESLint
+pnpm test                           # 單元測試
+pnpm test:e2e                       # Playwright E2E
+pnpm audit --prod --audit-level high
 pnpm build
-pnpm test:e2e
 ```
+
+CI 上的 E2E 截圖與 HTML 報告可從該次執行的 `e2e-evidence` artifact 下載。資料庫整合測試（`pnpm test:db`）需要本機 PostgreSQL，不在 CI 中執行。
 
 若變更涉及手勢、攝影機或效能，還需以真人實機驗證。模擬測試不能代替真實雙手操作、跨裝置相容性或散熱測試。實作中若發現需求或設計需要改變，先更新變更文件，再繼續實作。
 

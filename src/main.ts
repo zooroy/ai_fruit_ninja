@@ -57,7 +57,7 @@ const game = new Game(),
   gestures = new Gestures();
 let mode: Mode = "welcome",
   pending: Blade[] = [];
-let tutorialTarget: Target = {
+const tutorialTarget: Target = {
   id: -1,
   kind: 0,
   x: 0,
@@ -379,8 +379,8 @@ function frame(now: number) {
 }
 requestAnimationFrame(frame);
 // Explicit development-only hooks. No alternate input path in production builds.
-if (import.meta.env.DEV) {
-  (window as unknown as { __test: unknown }).__test = {
+function testHooks() {
+  return {
     game,
     camera,
     tracker,
@@ -419,3 +419,6 @@ if (import.meta.env.DEV) {
     inject: accept,
   };
 }
+/** E2E 透過 window.__test 操作的開發用介面。 */
+export type TestHooks = ReturnType<typeof testHooks>;
+if (import.meta.env.DEV) (window as Window & { __test?: TestHooks }).__test = testHooks();

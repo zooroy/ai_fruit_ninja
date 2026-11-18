@@ -56,7 +56,8 @@ export async function top(client: pg.Client) {
   return rows[0].r as { rank: number; id: string; name: string; score: number }[];
 }
 
-export async function rows(client: pg.Client) {
+/** 以 admin 連線讀取全部紀錄，不受 RLS 與呼叫端角色影響。 */
+export async function rows() {
   const admin = await connect("postgres");
   try {
     const r = await admin.query(

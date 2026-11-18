@@ -53,7 +53,7 @@ describe("concurrent submissions", () => {
     await a.query("commit");
     const rb = await pending;
     expect(rb.outcome).toBe("not_qualified");
-    const all = await rows(a);
+    const all = await rows();
     expect(all).toHaveLength(10);
     expect(all.filter((r) => r.score === 50).map((r) => r.display_name)).toEqual(["先"]);
   });
@@ -69,7 +69,7 @@ describe("concurrent submissions", () => {
     const rb = await pending;
     expect(ra).toMatchObject({ outcome: "accepted", created: true });
     expect(rb).toMatchObject({ outcome: "accepted", created: false, entryId: ra.entryId });
-    expect(await rows(a)).toHaveLength(1);
+    expect(await rows()).toHaveLength(1);
   });
 
   it("re-reads the cutoff after the lock instead of an older snapshot", async () => {
@@ -91,7 +91,7 @@ describe("concurrent submissions", () => {
     await b.query("commit");
     expect(rb.outcome).toBe("not_qualified");
     expect(rb.entries[9].score).toBe(100);
-    expect((await rows(a)).some((r) => r.score === 90)).toBe(false);
+    expect((await rows()).some((r) => r.score === 90)).toBe(false);
   });
 
   it("serializes many parallel submissions into ten unique, gap-free acceptance orders", async () => {
@@ -103,7 +103,7 @@ describe("concurrent submissions", () => {
         clients.map((c, i) => submit(c, entry(10 + (i % 3) * 5))),
       );
       expect(results.every((r) => r.outcome === "accepted" || r.outcome === "not_qualified")).toBe(true);
-      const all = await rows(a);
+      const all = await rows();
       expect(all.length).toBeGreaterThanOrEqual(10);
       expect(all.map((r) => Number(r.accepted_order))).toEqual(
         all.map((_, i) => i + 1),

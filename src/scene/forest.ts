@@ -199,7 +199,7 @@ export class Forest {
       const x = ((i % 11) - 5) * 1.65;
       this.tree(x, 3 + (i > 10 ? 1.1 : 0), 0.8 + (i % 3) * 0.17, i % 3 !== 0);
     }
-    for (let side of [-1, 1])
+    for (const side of [-1, 1])
       for (let i = 0; i < 4; i++)
         this.tree(
           side * (6.2 + (i % 2) * 0.8),

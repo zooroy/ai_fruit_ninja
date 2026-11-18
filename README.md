@@ -1,5 +1,7 @@
 # 森之刃 · Forest Slice
 
+[![CI / Deploy](https://github.com/zooroy/ai_fruit_ninja/actions/workflows/deploy.yml/badge.svg)](https://github.com/zooroy/ai_fruit_ninja/actions/workflows/deploy.yml) [![CodeQL](https://github.com/zooroy/ai_fruit_ninja/actions/workflows/codeql.yml/badge.svg)](https://github.com/zooroy/ai_fruit_ninja/actions/workflows/codeql.yml)
+
 用攝影機追蹤左右食指，在 low-poly 森林裡揮出雙刀切水果的 30 秒網頁遊戲。手部辨識完全在瀏覽器端執行，影像不上傳、不儲存，無需登入。
 
 **🎮 線上遊玩：<https://zooroy.github.io/ai_fruit_ninja/>**（桌機／筆電，需允許攝影機）
@@ -38,11 +40,12 @@ flowchart LR
 
 | 測試層級 | 指令 | 內容 |
 | --- | --- | --- |
+| 靜態檢查 | `pnpm check` · `pnpm lint` | TypeScript strict、ESLint（typescript-eslint） |
 | 單元 | `pnpm test` | 遊戲規則、合成手勢輸入、攝影機生命週期、排行榜規則與 Edge handler |
 | 瀏覽器 E2E | `pnpm test:e2e` | Playwright + 假攝影機跑完整流程；測試 hooks 不進正式建置 |
 | 資料庫整合 | `pnpm test:db` | 拋棄式 PostgreSQL 16 驗證權限、並發搶鎖、冪等與節流 |
 
-推送至 `main` 時，GitHub Actions 會先跑測試再建置、部署。
+**CI 品質閘門**（[`ci.yml`](.github/workflows/ci.yml)）：PR 與推送 `main` 時都會跑型別檢查、lint、單元測試、E2E 與 `pnpm audit --prod`（high 以上漏洞即失敗），全部通過才部署。每次 E2E 的截圖與 HTML 報告會保存為 workflow artifact（`e2e-evidence`，30 天）。CodeQL 在 PR、`main` 與每週排程時掃描。
 
 ## 本機啟動
 

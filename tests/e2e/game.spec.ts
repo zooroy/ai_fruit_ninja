@@ -1,3 +1,4 @@
+import "./window";
 import { test, expect } from "@playwright/test";
 test("camera and background keep their proportions across window sizes", async ({
   page,
@@ -23,7 +24,7 @@ test("camera and background keep their proportions across window sizes", async (
       )
       .toBeLessThan(0.01);
     const scale = await page.evaluate(() => {
-      const s = (window as any).__test.forest.background.scale;
+      const s = window.__test.forest.background.scale;
       return { x: s.x, y: s.y, z: s.z };
     });
     expect(scale).toEqual({ x: 1, y: 1, z: 1 });
@@ -58,7 +59,7 @@ test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
 }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    const t = (window as any).__test;
+    const t = window.__test;
     t.tutorial();
     t.inject([
       {
@@ -72,7 +73,7 @@ test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
   await expect(page.locator("#countdown")).toBeVisible();
   await expect(page.locator("#pause")).toBeVisible({ timeout: 7000 });
   await page.evaluate(() => {
-    const t = (window as any).__test;
+    const t = window.__test;
     t.game.targets = [1, 2, 3].map((id) => ({
       id: 900 + id,
       kind: 0,
@@ -89,7 +90,7 @@ test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
   });
   await expect(page.locator("#score")).toHaveText("045");
   await page.evaluate(() => {
-    const t = (window as any).__test;
+    const t = window.__test;
     t.game.targets = [
       {
         id: 999,
@@ -110,11 +111,11 @@ test("tutorial, countdown, scoring, bomb, pause, result and replay", async ({
   await page.getByRole("button", { name: "暫停", exact: true }).click();
   await expect(page.getByRole("button", { name: "繼續" })).toBeVisible();
   await page.getByRole("button", { name: "繼續" }).click();
-  await page.evaluate(() => (window as any).__test.finish());
+  await page.evaluate(() => window.__test.finish());
   await expect(page.getByText("本局結束")).toBeVisible();
   await expect(page.locator(".stats")).toContainText("3");
   expect(
-    await page.evaluate(() => (window as any).__test.camera.stream),
+    await page.evaluate(() => window.__test.camera.stream),
   ).toBeNull();
   await page.screenshot({ path: "test-results/screenshots/results.png" });
   await page.getByRole("button", { name: "再玩一次" }).click();
@@ -131,11 +132,11 @@ test("real local model loads with fake camera, then cleanup", async ({
   await page.getByRole("button", { name: "啟動攝影機" }).click();
   await expect(page.locator("#tutorial")).toBeVisible({ timeout: 30000 });
   expect(
-    await page.evaluate(() => (window as any).__test.tracker.mode),
+    await page.evaluate(() => window.__test.tracker.mode),
   ).toMatch(/worker|main/);
-  await page.evaluate(() => (window as any).__test.home());
+  await page.evaluate(() => window.__test.home());
   expect(
-    await page.evaluate(() => (window as any).__test.camera.stream),
+    await page.evaluate(() => window.__test.camera.stream),
   ).toBeNull();
   expect(uploaded).toEqual([]);
 });
@@ -147,7 +148,7 @@ test("model failure shows retry and closes camera", async ({ page }) => {
     timeout: 30000,
   });
   expect(
-    await page.evaluate(() => (window as any).__test.camera.stream),
+    await page.evaluate(() => window.__test.camera.stream),
   ).toBeNull();
 });
 test("muting is independent of gameplay", async ({
@@ -174,14 +175,14 @@ test("worker failure falls back to limited main-thread inference", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "啟動攝影機" }).click();
   await expect(page.locator("#tutorial")).toBeVisible({ timeout: 30000 });
-  expect(await page.evaluate(() => (window as any).__test.tracker.mode)).toBe(
+  expect(await page.evaluate(() => window.__test.tracker.mode)).toBe(
     "main",
   );
 });
 test("fruit effects are consumed once and expire", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => {
-    const t = (window as any).__test;
+    const t = window.__test;
     t.start();
     t.game.tick(performance.now());
     t.game.targets = [
@@ -207,11 +208,11 @@ test("fruit effects are consumed once and expire", async ({ page }) => {
   });
   await expect(page.locator("#score")).toHaveText("010");
   expect(
-    await page.evaluate(() => (window as any).__test.forest.effects.length),
+    await page.evaluate(() => window.__test.forest.effects.length),
   ).toBe(17);
   await page.waitForTimeout(1500);
   expect(
-    await page.evaluate(() => (window as any).__test.forest.effects.length),
+    await page.evaluate(() => window.__test.forest.effects.length),
   ).toBe(0);
 });
 
@@ -222,7 +223,7 @@ test("HUD shows only score and time; only combos and bombs float text", async ({
   const hit = (id: number, kinds: number[]) =>
     page.evaluate(
       ({ id, kinds }) => {
-        const t = (window as any).__test;
+        const t = window.__test;
         t.game.targets = kinds.map((kind, i) => ({
           id: 800 + Math.floor(Math.random() * 1e6) + i,
           kind,
@@ -239,7 +240,7 @@ test("HUD shows only score and time; only combos and bombs float text", async ({
       },
       { id, kinds },
     );
-  await page.evaluate(() => (window as any).__test.start());
+  await page.evaluate(() => window.__test.start());
   await expect(page.locator("#hud")).toBeVisible();
   await expect(page.locator("#hud")).not.toContainText("連切");
   await expect(page.locator("#camera-card")).not.toContainText("LOCAL");
