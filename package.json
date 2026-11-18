@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0 --port 5188 --strictPort",
     "build": "node scripts/build-worker.mjs && tsc --noEmit && vite build",
     "check": "tsc --noEmit",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "assets": "node scripts/assets.mjs && node scripts/build-worker.mjs",
@@ -17,13 +18,17 @@
     "three": "0.180.0"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.56.1",
     "@types/pg": "8.11.10",
     "@types/three": "0.180.0",
     "esbuild": "0.25.12",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
     "pg": "8.13.1",
     "prettier": "3.6.2",
     "typescript": "5.9.3",
+    "typescript-eslint": "8.73.0",
     "vite": "7.1.9",
     "vitest": "3.2.4"
   }

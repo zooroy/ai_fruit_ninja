@@ -69,7 +69,7 @@ describe("edge handler against the real database", () => {
     const lowBody = await low.json();
     expect(lowBody.error.code).toBe("not_qualified");
     expect(lowBody.entries).toHaveLength(10);
-    expect(await rows(db)).toHaveLength(10);
+    expect(await rows()).toHaveLength(10);
   });
 
   it("never returns submission ids or private stats", async () => {
@@ -95,7 +95,7 @@ describe("edge handler against the real database", () => {
       body(30, { name: "a\u0001" }),
     ])
       expect((await handle(post(bad))).status).toBe(400);
-    expect(await rows(db)).toEqual([]);
+    expect(await rows()).toEqual([]);
   });
 });
 
@@ -123,7 +123,7 @@ describe("SQL boundary validation (direct RPC)", () => {
     ["missing bombs", { ...entry(0), bombs: undefined }, "invalid_stats"],
   ])("rejects %s", async (_l, value, code) => {
     await invalid(value, code);
-    expect(await rows(db)).toEqual([]);
+    expect(await rows()).toEqual([]);
   });
 
   it.each([

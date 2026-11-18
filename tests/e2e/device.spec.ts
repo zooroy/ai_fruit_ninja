@@ -1,3 +1,4 @@
+import "./window";
 import { test, expect, type Page } from "@playwright/test";
 
 // 手機與平板以 Playwright 的觸控模擬（hasTouch + isMobile）測試；Chromium 在此模式下
@@ -12,13 +13,13 @@ const entries = [
 async function prepare(page: Page) {
   const calls = { camera: 0, model: 0, posts: 0 };
   await page.addInitScript((url) => {
-    (window as any).__leaderboardUrl = url;
-    (window as any).__cameraCalls = 0;
+    window.__leaderboardUrl = url;
+    window.__cameraCalls = 0;
     const md = navigator.mediaDevices;
     if (md) {
       const original = md.getUserMedia.bind(md);
       md.getUserMedia = (c) => {
-        (window as any).__cameraCalls++;
+        window.__cameraCalls++;
         return original(c);
       };
     }
@@ -35,7 +36,7 @@ async function prepare(page: Page) {
   await page.goto("/");
   return {
     calls,
-    cameraCalls: () => page.evaluate(() => (window as any).__cameraCalls as number),
+    cameraCalls: () => page.evaluate(() => window.__cameraCalls as number),
   };
 }
 
@@ -78,18 +79,18 @@ for (const [label, viewport, shot] of unsupported) {
       await expect(open).toBeFocused();
 
       // 開發入口直接呼叫 setup() 也會被擋下。
-      await page.evaluate(() => (window as any).__test.setup());
-      expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
+      await page.evaluate(() => window.__test.setup());
+      expect(await page.evaluate(() => window.__test.mode)).toBe("welcome");
 
       // 結算「再玩一次」（以開發 hook 進入結算）同樣回到首頁說明。
       await page.evaluate(() => {
-        const t = (window as any).__test;
+        const t = window.__test;
         t.start();
         t.finish();
       });
       await page.getByRole("button", { name: "再玩一次" }).click();
       await expect(note).toBeVisible();
-      expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
+      expect(await page.evaluate(() => window.__test.mode)).toBe("welcome");
 
       await page.waitForTimeout(300);
       expect(await cameraCalls()).toBe(0);

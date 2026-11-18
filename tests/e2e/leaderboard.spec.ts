@@ -1,3 +1,4 @@
+import "./window";
 import { test, expect, type Page, type Route } from "@playwright/test";
 
 const API = "http://leaderboard.test/functions/v1/leaderboard";
@@ -64,7 +65,7 @@ class MockApi {
 
 async function finishRound(page: Page, stats: Stats) {
   await page.evaluate((s) => {
-    const t = (window as any).__test;
+    const t = window.__test;
     t.start();
     Object.assign(t.game, { bombs: 0, maxCombo: 0, ...s });
     t.finish();
@@ -81,11 +82,11 @@ test.describe("home leaderboard dialog", () => {
     api.seed([300, 200, 100]);
     await api.install(page);
     await page.addInitScript(() => {
-      (window as any).__cameraCalls = 0;
+      window.__cameraCalls = 0;
       const original = navigator.mediaDevices?.getUserMedia?.bind(navigator.mediaDevices);
       if (navigator.mediaDevices)
         navigator.mediaDevices.getUserMedia = (c) => {
-          (window as any).__cameraCalls++;
+          window.__cameraCalls++;
           return original!(c);
         };
     });
@@ -113,9 +114,9 @@ test.describe("home leaderboard dialog", () => {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(open).toBeFocused();
-    expect(await page.evaluate(() => (window as any).__cameraCalls)).toBe(0);
-    expect(await page.evaluate(() => (window as any).__test.mode)).toBe("welcome");
-    expect(await page.evaluate(() => (window as any).__test.camera.stream)).toBeNull();
+    expect(await page.evaluate(() => window.__cameraCalls)).toBe(0);
+    expect(await page.evaluate(() => window.__test.mode)).toBe("welcome");
+    expect(await page.evaluate(() => window.__test.camera.stream)).toBeNull();
     await expect(page.getByRole("button", { name: "靜音", exact: true })).toHaveAttribute("aria-pressed", "true");
 
     // 鍵盤開啟、按鈕關閉。
@@ -161,7 +162,7 @@ test.describe("home leaderboard dialog", () => {
   });
 
   test("explains an unconfigured service", async ({ page }) => {
-    await page.addInitScript(() => ((window as any).__leaderboardUrl = ""));
+    await page.addInitScript(() => (window.__leaderboardUrl = ""));
     await page.goto("/");
     await page.getByRole("button", { name: "排行榜", exact: true }).click();
     await expect(page.getByRole("dialog").getByText("排行榜未啟用")).toBeVisible();
@@ -180,7 +181,7 @@ test.describe("result leaderboard", () => {
     const input = page.getByLabel("名字");
     await expect(input).toBeVisible();
     await expect(page.getByText("公開顯示，可留白")).toBeVisible();
-    expect(await page.evaluate(() => (window as any).__test.camera.stream)).toBeNull();
+    expect(await page.evaluate(() => window.__test.camera.stream)).toBeNull();
 
     await input.fill("   ");
     await page.getByRole("button", { name: "送出" }).click();
@@ -192,7 +193,7 @@ test.describe("result leaderboard", () => {
     await expect(mine.locator(".board-rank")).toHaveText("3");
     expect(api.posts).toHaveLength(1);
     expect(api.posts[0]).toMatchObject({ name: "不知名的勇者", score: 150, fruits: 15, bombs: 1, maxCombo: 3 });
-    expect(api.posts[0].submissionId).toBe(await page.evaluate(() => (window as any).__test.roundId));
+    expect(api.posts[0].submissionId).toBe(await page.evaluate(() => window.__test.roundId));
     await expect(page.getByRole("button", { name: "送出" })).toBeHidden();
   });
 
@@ -216,7 +217,7 @@ test.describe("result leaderboard", () => {
     await expect(page.getByLabel("名字")).toBeHidden();
     await expect(rows(page)).toHaveCount(10);
 
-    await page.evaluate(() => (window as any).__test.home());
+    await page.evaluate(() => window.__test.home());
     await finishRound(page, { score: 100, fruits: 10 });
     await expect(board(page).getByRole("status")).toHaveText("需超過 100 分才能入榜");
     await expect(page.getByLabel("名字")).toBeHidden();
@@ -288,7 +289,7 @@ test.describe("result leaderboard failures", () => {
     await expect(page.getByRole("button", { name: "再玩一次" })).toBeVisible();
     await page.getByRole("button", { name: "重新載入" }).click();
     await expect(page.getByLabel("名字")).toBeVisible();
-    expect(await page.evaluate(() => (window as any).__test.mode)).toBe("results");
+    expect(await page.evaluate(() => window.__test.mode)).toBe("results");
   });
 
   test("lost response is retried with the same payload and stored once", async ({ page }) => {
@@ -365,7 +366,7 @@ test.describe("result leaderboard failures", () => {
   });
 
   test("unconfigured service never offers submission and replay still works", async ({ page }) => {
-    await page.addInitScript(() => ((window as any).__leaderboardUrl = ""));
+    await page.addInitScript(() => (window.__leaderboardUrl = ""));
     await page.goto("/");
     await finishRound(page, { score: 60, fruits: 6 });
     await expect(board(page).getByRole("status")).toHaveText("排行榜未啟用，本局成績不會保存");
@@ -393,10 +394,10 @@ test.describe("result leaderboard failures", () => {
     });
     await finishRound(page, { score: 40, fruits: 4 });
     await expect(board(page).getByRole("status")).toHaveText("載入中…");
-    const firstRound = await page.evaluate(() => (window as any).__test.roundId);
+    const firstRound = await page.evaluate(() => window.__test.roundId);
     await page.getByRole("button", { name: "返回首頁" }).click();
     await finishRound(page, { score: 350, fruits: 35 });
-    expect(await page.evaluate(() => (window as any).__test.roundId)).not.toBe(firstRound);
+    expect(await page.evaluate(() => window.__test.roundId)).not.toBe(firstRound);
     await expect(board(page).getByRole("status")).toHaveText("可排第 1 名");
     release();
     await page.waitForTimeout(300);
@@ -425,7 +426,7 @@ test.describe("leaderboard presentation", () => {
       await finishRound(page, { score: 250, fruits: 25, bombs: 1, maxCombo: 4 });
       await expect(rows(page)).toHaveCount(10);
       await expect(rows(page).first().locator(".board-name")).toHaveText("<img src=x onerror=window.__xss=1>");
-      expect(await page.evaluate(() => (window as any).__xss)).toBeUndefined();
+      expect(await page.evaluate(() => window.__xss)).toBeUndefined();
       expect(await page.locator("#result-stats img").count()).toBe(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       // 名字欄位不會撐破木牌。
@@ -460,7 +461,7 @@ test.describe("leaderboard presentation", () => {
     await page.getByRole("button", { name: "排行榜", exact: true }).click();
     await expect(page.getByRole("dialog").locator(".board-row")).toHaveCount(10);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect(await page.evaluate(() => (window as any).__xss)).toBeUndefined();
+    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
     await page.screenshot({ path: "test-results/screenshots/narrow-window-dialog.png" });
   });
 

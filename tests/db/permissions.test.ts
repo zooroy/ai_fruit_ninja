@@ -58,7 +58,7 @@ describe.each(visitors)("%s visitor", (role) => {
 
   it("leaves data unchanged after the attempts", async () => {
     await db().query("select 1");
-    const all = await rows(db());
+    const all = await rows();
     expect(all).toHaveLength(1);
     expect(all[0].score).toBe(100);
   });

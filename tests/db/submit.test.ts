@@ -36,11 +36,11 @@ describe("leaderboard_submit admission", () => {
 
   it("rejects a tie with the tenth place on a full board without writing", async () => {
     await fill([500, 400, 300, 200, 150, 120, 110, 105, 100, 100]);
-    const before = await rows(db);
+    const before = await rows();
     const r = await submit(db, entry(100));
     expect(r.outcome).toBe("not_qualified");
     expect(r.entries).toHaveLength(10);
-    expect(await rows(db)).toHaveLength(before.length);
+    expect(await rows()).toHaveLength(before.length);
   });
 
   it("rejects a lower score on a full board", async () => {
@@ -57,7 +57,7 @@ describe("leaderboard_submit admission", () => {
     ]);
     // 同分時較早接受者在前：既有 105 排第 8，新的 105 排第 9。
     expect(r.entries[8]).toMatchObject({ rank: 9, name: "新人" });
-    const all = await rows(db);
+    const all = await rows();
     expect(all).toHaveLength(11);
     expect(all.some((row) => row.score === 95)).toBe(true);
     expect(r.entries.some((e: { score: number }) => e.score === 95)).toBe(false);
@@ -75,7 +75,7 @@ describe("leaderboard_submit admission", () => {
     ]);
     expect(board[1].id).toBe(a.entryId);
     expect(board[2].id).toBe(b.entryId);
-    const all = await rows(db);
+    const all = await rows();
     expect(all.map((row) => Number(row.accepted_order))).toEqual([1, 2, 3]);
     expect(all[0].accepted_at.getTime()).toBeLessThanOrEqual(
       all[1].accepted_at.getTime(),

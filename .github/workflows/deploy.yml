@@ -13,7 +13,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # 先通過品質閘門（.github/workflows/ci.yml），才建置與部署。
+  ci:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +31,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm assets
-      - run: pnpm test
       - run: pnpm build
         env:
           # 公開排行榜端點（repository variable，非 secret）；未設定時排行榜顯示未開張。

@@ -1,0 +1,62 @@
+name: CI
+
+# 品質閘門：PR 直接觸發；push main 由 deploy.yml 以 workflow_call 呼叫，通過後才部署。
+on:
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Typecheck · Lint · Unit · Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+  e2e:
+    name: E2E (Chrome, fake camera)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache hand model
+        uses: actions/cache@v4
+        with:
+          path: public/models/hand_landmarker.task
+          key: hand-model-${{ hashFiles('scripts/assets.mjs') }}
+      - run: pnpm assets
+      - run: pnpm exec playwright install --with-deps --force chrome
+      - run: pnpm test:e2e
+      - name: Upload acceptance evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 30
+          if-no-files-found: error

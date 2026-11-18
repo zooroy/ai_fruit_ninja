@@ -21,7 +21,7 @@ describe("leaderboard_submit idempotency", () => {
       created: false,
       entryId: first.entryId,
     });
-    const all = await rows(db);
+    const all = await rows();
     expect(all).toHaveLength(1);
     expect(all[0].display_name).toBe("重試者");
   });
@@ -39,7 +39,7 @@ describe("leaderboard_submit idempotency", () => {
     });
     expect(retry.entries.some((e: { id: string }) => e.id === first.entryId)).toBe(false);
     expect(
-      (await rows(db)).filter((r) => r.submission_id === payload.submissionId),
+      (await rows()).filter((r) => r.submission_id === payload.submissionId),
     ).toHaveLength(1);
   });
 
@@ -61,7 +61,7 @@ describe("leaderboard_submit idempotency", () => {
     await submit(db, payload);
     const conflict = await submit(db, { ...payload, ...change });
     expect(conflict.outcome).toBe("submission_conflict");
-    const all = await rows(db);
+    const all = await rows();
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({
       display_name: "原名",
@@ -77,7 +77,7 @@ describe("leaderboard_submit idempotency", () => {
     const payload = entry(100);
     expect((await submit(db, payload)).outcome).toBe("not_qualified");
     expect(
-      (await rows(db)).some((r) => r.submission_id === payload.submissionId),
+      (await rows()).some((r) => r.submission_id === payload.submissionId),
     ).toBe(false);
   });
 });
