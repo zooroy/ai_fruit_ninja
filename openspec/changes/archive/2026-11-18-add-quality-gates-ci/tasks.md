@@ -22,8 +22,8 @@
 
 ## 5. 整合驗收
 
-- [ ] 5.1 推送 branch 並開 PR：確認 `static`、`e2e` 與 CodeQL 都出現在 PR 檢查且通過，artifact 可以下載，並包含截圖與 HTML 報告；若 E2E 在 runner 上不穩，修正測試的等待條件後再跑。
-- [ ] 5.2 合併到 main：確認同一次 deploy 執行先跑完 `ci`，才進行 build 與 deploy，且正式網站正常載入；`openspec validate add-quality-gates-ci --strict` 通過。
+- [x] 5.1 推送 branch 並開 PR：確認 `static`、`e2e` 與 CodeQL 都出現在 PR 檢查且通過，artifact 可以下載，並包含截圖與 HTML 報告；若 E2E 在 runner 上不穩，修正測試的等待條件後再跑。
+- [x] 5.2 合併到 main：確認同一次 deploy 執行先跑完 `ci`，才進行 build 與 deploy，且正式網站正常載入；`openspec validate add-quality-gates-ci --strict` 通過。
 
 ## Workflow follow-up
 

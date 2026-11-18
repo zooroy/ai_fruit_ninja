@@ -36,7 +36,7 @@ flowchart LR
 
 ## 開發方式
 
-採用 **OpenSpec 規格驅動開發**：每項功能先 `propose`（proposal / delta specs / design / tasks），審閱後 `apply` 實作與驗證，最後 `archive` 同步回[正式規格](openspec/specs/)。目前已完成 4 個變更：[手勢切水果](openspec/changes/archive/2026-10-10-add-gesture-fruit-ninja/proposal.md)、[歷史排行榜](openspec/changes/archive/2026-10-11-add-historical-leaderboard/proposal.md)、[停止支援行動裝置](openspec/changes/archive/2026-10-11-drop-mobile-support/proposal.md)、[精簡介面與共用元件](openspec/changes/archive/2026-11-17-simplify-ui-and-components/proposal.md)。操作方式見 [OpenSpec 開發流程](docs/openspec-workflow.md)。
+採用 **OpenSpec 規格驅動開發**：每項功能先 `propose`（proposal / delta specs / design / tasks），審閱後 `apply` 實作與驗證，最後 `archive` 同步回[正式規格](openspec/specs/)。目前已完成 5 個變更：[手勢切水果](openspec/changes/archive/2026-10-10-add-gesture-fruit-ninja/proposal.md)、[歷史排行榜](openspec/changes/archive/2026-10-11-add-historical-leaderboard/proposal.md)、[停止支援行動裝置](openspec/changes/archive/2026-10-11-drop-mobile-support/proposal.md)、[精簡介面與共用元件](openspec/changes/archive/2026-11-17-simplify-ui-and-components/proposal.md)、[CI 品質閘門](openspec/changes/archive/2026-11-18-add-quality-gates-ci/proposal.md)。操作方式見 [OpenSpec 開發流程](docs/openspec-workflow.md)。
 
 | 測試層級 | 指令 | 內容 |
 | --- | --- | --- |

@@ -1,13 +1,13 @@
-# Spec Delta
+# quality-gates Specification
 
 ## Purpose
 
 定義程式碼進入 main 與部署上線前必須通過的自動化品質閘門，以及檢查結果、驗收證據與安全掃描的保存方式，讓每次發布都有可追溯的驗證。
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: 品質閘門檢查項目
-品質閘門 SHALL 依序執行型別檢查、靜態 lint、單元測試、瀏覽器端對端測試與正式相依套件稽核；任一項失敗，閘門即判定失敗。
+品質閘門 SHALL 執行型別檢查、靜態 lint、單元測試、瀏覽器端對端測試與正式相依套件稽核；各項可平行執行，任一項失敗，閘門即判定失敗。
 
 #### Scenario: 全部通過
 - **WHEN** 型別檢查、lint、單元測試、端對端測試與相依套件稽核都成功
