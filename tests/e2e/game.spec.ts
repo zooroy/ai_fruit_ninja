@@ -210,10 +210,11 @@ test("fruit effects are consumed once and expire", async ({ page }) => {
   expect(
     await page.evaluate(() => window.__test.forest.effects.length),
   ).toBe(17);
-  await page.waitForTimeout(1500);
-  expect(
-    await page.evaluate(() => window.__test.forest.effects.length),
-  ).toBe(0);
+  // 特效壽命以動畫時間計算（每幀 dt 上限 50 ms），軟體算繪的 CI 幀率低時，
+  // 實際經過時間會比 1.2 秒長，所以等待條件成立，不假設固定時長。
+  await expect
+    .poll(() => page.evaluate(() => window.__test.forest.effects.length), { timeout: 10000 })
+    .toBe(0);
 });
 
 test("HUD shows only score and time; only combos and bombs float text", async ({
