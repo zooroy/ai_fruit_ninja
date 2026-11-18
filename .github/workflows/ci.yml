@@ -31,7 +31,8 @@ jobs:
 
   e2e:
     name: E2E (Chrome, fake camera)
-    runs-on: ubuntu-latest
+    # Playwright 1.56 不支援 ubuntu-latest（26.04）的瀏覽器相依套件，升級 Playwright 前固定版本。
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -49,9 +50,11 @@ jobs:
           key: hand-model-${{ hashFiles('scripts/assets.mjs') }}
       - run: pnpm assets
       - run: pnpm exec playwright install --with-deps --force chrome
-      - run: pnpm test:e2e
+      - id: e2e
+        run: pnpm test:e2e
+      # E2E 有執行就上傳（成功或失敗都上傳）；前面步驟失敗時沒有證據可傳。
       - name: Upload acceptance evidence
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.e2e.outcome != 'skipped' }}
         uses: actions/upload-artifact@v4
         with:
           name: e2e-evidence
