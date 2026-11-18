@@ -72,6 +72,7 @@
 - [GitHub runner 上 E2E 的時序比本機慢，可能不穩定] → `retries: 1` 加上 trace；實作時先在 PR 上跑幾次確認穩定，若有特定測試不穩，就修測試的等待條件，不要提高 timeout 掩蓋問題。
 - [`pnpm audit` 依賴 npm registry 的稽核 API，暫時故障會擋住部署] → 接受。這是安全閘門的代價；必要時可以手動重跑該 job。
 - [新漏洞公告可能讓原本綠燈的 main 變紅] → 這正是預期行為；修正方式是升級套件，不是移除稽核。
+- [`ubuntu-latest` 升到 26.04 後，Playwright 1.56 無法安裝瀏覽器相依套件（PR #1 第一次執行時發現）] → `e2e` job 固定使用 `ubuntu-24.04`；之後升級 Playwright 時再改回 `ubuntu-latest`。
 - [模型下載依賴 Google Storage] → `actions/cache` 快取 `public/models`，checksum 檢查已在 `scripts/assets.mjs` 中。
 - [CodeQL 第一次掃描可能產生既有警示] → 實作時檢查第一次結果，修正真正的問題；誤報在 GitHub 介面標記為 dismiss，並寫明理由。
 
